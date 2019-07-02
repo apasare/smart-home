@@ -1,0 +1,20 @@
+{
+  "name": "@simplecoding/daikin-controller",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node lib/index.js",
+    "compile": "tsc",
+    "check": "tslint -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.3.7",
+    "@types/node": "^12.0.10",
+    "tslint": "^5.18.0",
+    "typescript": "^3.5.2"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  }
+}
