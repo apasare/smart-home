@@ -1,27 +1,21 @@
 import { Response as FetchResponse } from "node-fetch";
 
-export class Response<T> {
+import { IResponse } from "../interface";
+
+export class Response<T> implements IResponse<T> {
+  protected data: Map<string, string> = new Map<string, string>();
   protected response: FetchResponse;
-  protected data: Map<string, string>;
 
   constructor(response: FetchResponse) {
-    this.data = new Map<string, string>();
     this.response = response;
   }
 
-  public async get(key: keyof T) {
-    if (this.data.size === 0) {
-      await this.parseResponse();
-    }
-
-    return this.data.get(key.toString());
+  public setData(data: Map<string, string>): this {
+    this.data = new Map([...data]);
+    return this;
   }
 
-  protected async parseResponse() {
-    const responseString: string = (await this.response.buffer()).toString();
-    responseString.split(",").forEach((item) => {
-      const keyValue = item.split("=");
-      this.data.set(keyValue[0], keyValue[1]);
-    });
+  public get(key: keyof T): string | undefined {
+    return this.data.get(key.toString());
   }
 }

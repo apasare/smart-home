@@ -1,4 +1,4 @@
-import { DaikinController } from "./daikin-controller";
+import { Client } from "./api";
 import { discover } from "./discover";
 
 export * from "./discover";
@@ -9,6 +9,6 @@ export * from "./discover";
     // probePort: 30000,
   });
 
-  const ac = new DaikinController(devices[0].address);
+  const ac = new Client(devices[0].address);
   console.log(await (await ac.getBasicInfo()).get("type"));
 })();
