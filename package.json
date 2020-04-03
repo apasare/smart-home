@@ -1,8 +1,7 @@
 {
   "private": true,
-  "name": "home",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "@godvsdeity/smart-home",
+  "version": "0.1.0",
   "license": "MIT",
   "workspaces": [
     "packages/*"
