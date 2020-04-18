@@ -74,7 +74,7 @@ export class TorrentContainer {
     const torrent = this.torrentClient.add(data, {
       path: path.join(this.torrentsDownloadDir, magnetUri.infoHash),
     });
-    torrent.on("metadata", () => {
+    torrent.on("ready", () => {
       torrent.deselect(0, torrent.pieces.length - 1, 0);
     });
 

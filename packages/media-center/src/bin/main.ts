@@ -43,9 +43,9 @@ function spawnProcess(
 }
 
 function bootstrap(): void {
-  const streamProcess = spawnProcess("stream", ["node", "stream.js"]);
+  const streamProcess = spawnProcess("stream", ["node", "streamApi.js"]);
   const torrentProcess = spawnProcess("torrent", ["node", "torrent.js"]);
-  const apiProcess = spawnProcess("api", ["node", "api.js"]);
+  // const apiProcess = spawnProcess("api", ["node", "api.js"]);
 
   const ipcActionManager = new IPCActionManager([
     new ForwardToHandler(processes),
@@ -56,7 +56,7 @@ function bootstrap(): void {
     await ipcActionManager.handle(message);
   };
 
-  apiProcess.on("message", ipcActionManagerCallback);
+  // apiProcess.on("message", ipcActionManagerCallback);
   torrentProcess.on("message", ipcActionManagerCallback);
   streamProcess.on("message", ipcActionManagerCallback);
 }

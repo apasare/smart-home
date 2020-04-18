@@ -7,30 +7,30 @@ import { streamTorrentsRepository } from "../../repository";
 import { IPCReadStream, Controller, Get } from "../../service";
 import { streamIpcManager } from "../../singleton";
 
-@Controller()
+@Controller("/stream")
 export class DownloadTorrentFile {
   @Get("/:infoHash/:fileId")
   async downloadtorrentFile(ctx: Koa.ParameterizedContext): Promise<void> {
-    const torrent = streamTorrentsRepository.find((torrent) =>
-      torrent.infoHash.startsWith(ctx.params.infoHash)
-    );
+    // there's a bug when reading from the file for the first time: it hangs
+    // probably because the lock is not released on file :?
+    // for use a 5 sec timeout to stop the request and let the browser try again
+    ctx.req.setTimeout(5000);
+
+    const torrent = streamTorrentsRepository.get(ctx.params.infoHash);
     if (!torrent) {
-      // 404 - koa default response
+      ctx.status = 404;
+      ctx.body = `No torrent with id ${ctx.params.infoHash}`;
       return;
     }
     const file = torrent.files.find(
       (file) => file.id === parseInt(ctx.params.fileId)
     );
     if (!file) {
-      // 404 - koa default response
+      ctx.status = 404;
+      ctx.body = `No file with id ${ctx.params.fileId}`;
       return;
     }
     const filePath = path.join(torrent.path, file.path);
-    // if (!fs.existsSync(filePath)) {
-    //   ctx.status = 404;
-    //   ctx.body = "Not Found";
-    //   return;
-    // }
 
     // set streaming headers
     ctx.set(
@@ -65,7 +65,7 @@ export class DownloadTorrentFile {
       );
       ctx.set("Content-Length", (range.end - range.start + 1).toString());
     } else {
-      ctx.set("Content-Length", file.size);
+      ctx.set("Content-Length", file.size.toString());
     }
 
     const readStream = new IPCReadStream(

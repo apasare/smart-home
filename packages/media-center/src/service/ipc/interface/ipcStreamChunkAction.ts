@@ -8,6 +8,7 @@ export interface BufferData {
 }
 export interface IpcStreamChunkPayload {
   streamId: string;
+  chunkIndex: number;
   chunkStart: number;
   chunkSize: number;
 }

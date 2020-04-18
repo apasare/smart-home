@@ -11,7 +11,7 @@ import {
 import { torrentIpcManager } from "../singleton";
 
 const torrentClient = new WebTorrent({
-  maxConns: Number(process.env.TORRENT_MAX_CONNS) || 55,
+  maxConns: Number(process.env.TORRENT_MAX_CONNS) || 30,
 });
 const torrentContainer = new TorrentContainer(torrentClient);
 torrentIpcManager.pushHandler([

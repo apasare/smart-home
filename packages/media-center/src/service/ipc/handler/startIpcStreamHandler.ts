@@ -77,6 +77,7 @@ export class StartIpcStreamHandler implements HandlerInterface {
     // @TODO: use a logger
     console.log("start stream", action.payload.streamId);
 
+    let chunkIndex = 0;
     let chunkStart = start;
     const fileReadStream = file.createReadStream({
       start,
@@ -84,23 +85,26 @@ export class StartIpcStreamHandler implements HandlerInterface {
     }) as Readable;
 
     fileReadStream.on("data", (chunk: Buffer) => {
+      // console.log(chunkIndex, chunk.byteLength);
       dispatchIPCAction<IpcStreamChunkAction>({
         type: IPC_STREAM_CHUNK_ACTION,
         payload: {
           streamId: action.payload.streamId,
+          chunkIndex: chunkIndex++,
           chunkStart,
-          chunkSize: chunk.length,
+          chunkSize: chunk.byteLength,
         },
         forward: ["stream"],
       });
 
-      chunkStart += chunk.length;
+      chunkStart += chunk.byteLength;
     });
     fileReadStream.on("end", () => {
       dispatchIPCAction<IpcStreamChunkAction>({
         type: IPC_STREAM_CHUNK_ACTION,
         payload: {
           streamId: action.payload.streamId,
+          chunkIndex: chunkIndex++,
           chunkStart,
           chunkSize: 0,
         },

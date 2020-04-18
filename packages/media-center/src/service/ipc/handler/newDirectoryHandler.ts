@@ -1,8 +1,13 @@
 import { HandlerInterface, ActionDTO } from "../interface";
+import {
+  StreamTorrentsRepository,
+  StreamTorrentData,
+} from "../../../repository";
+import { generateInfoHashId } from "../../../helper";
 
 export class NewDirectoryHandler implements HandlerInterface {
   constructor(
-    protected streamTorrentsRepository: any[],
+    protected streamTorrentsRepository: StreamTorrentsRepository,
     protected bubble = false
   ) {}
 
@@ -14,14 +19,12 @@ export class NewDirectoryHandler implements HandlerInterface {
     return this.bubble;
   }
 
-  handle(action: ActionDTO): boolean {
-    if (
-      !this.streamTorrentsRepository.find(
-        (directory) => directory.infoHash === action.payload.infoHash
-      )
-    ) {
-      this.streamTorrentsRepository.push(action.payload);
+  handle(action: ActionDTO<StreamTorrentData>): boolean {
+    const key = generateInfoHashId(action.payload.infoHash);
+    if (!this.streamTorrentsRepository.has(key)) {
+      this.streamTorrentsRepository.set(key, action.payload);
     }
+
     return true;
   }
 }

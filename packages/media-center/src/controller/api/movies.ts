@@ -8,7 +8,7 @@ import {
 } from "../../service";
 import { ButterController } from "./butterController";
 
-@Controller()
+@Controller("/movies")
 export class Movies extends ButterController {
   constructor(protected butterClient: ButterApiClient = new ButterApiClient()) {
     super(
@@ -17,12 +17,12 @@ export class Movies extends ButterController {
     );
   }
 
-  @Get("/movies")
+  @Get("/")
   async movies(ctx: Koa.BaseContext): Promise<ButterMovieDTO[]> {
     return await this.getCollection(ctx.query);
   }
 
-  @Get("/movies/:id")
+  @Get("/:id")
   async movie(ctx: Koa.ParameterizedContext): Promise<ButterMovieDTO | void> {
     return await this.getItem(ctx.params.id);
   }
