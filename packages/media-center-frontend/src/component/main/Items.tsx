@@ -13,12 +13,22 @@ interface ItemsProps {
   getPosterUrl?: Function;
 }
 
+const loader = (
+  <article key="loader" className="m-2 align-self-center">
+    <div className="movie-card d-flex justify-content-center">
+      <div className="spinner-border text-light" role="status">
+        <span className="sr-only">Loading...</span>
+      </div>
+    </div>
+  </article>
+);
+
 function Items({ apiResource, getPosterUrl }: ItemsProps) {
   const [items, setItems] = React.useState<Record<string, any>[]>([]);
   const [hasMoreItems, setHasMoreItems] = React.useState(true);
   const [counter, setCounter] = React.useState(0);
   const query = useQuery();
-  console.log(query);
+  const itemsPerPage = 50;
 
   const loadMoreItems = React.useCallback(
     async (page) => {
@@ -32,7 +42,7 @@ function Items({ apiResource, getPosterUrl }: ItemsProps) {
       const newItems: Record<string, any>[] = await response.json();
 
       ReactDom.unstable_batchedUpdates(async () => {
-        setHasMoreItems(!!newItems.length);
+        setHasMoreItems(newItems.length === itemsPerPage);
         setCounter((counter) => (page === 1 ? ++counter : counter));
         setItems(page === 1 ? newItems : (items) => [...items, ...newItems]);
       });
@@ -54,6 +64,7 @@ function Items({ apiResource, getPosterUrl }: ItemsProps) {
         initialLoad={false}
         hasMore={hasMoreItems}
         loadMore={loadMoreItems}
+        loader={loader}
         className="d-flex flex-wrap justify-content-start"
       >
         {items.map((item: Record<string, any>) => (
