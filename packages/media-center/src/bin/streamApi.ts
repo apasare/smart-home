@@ -5,6 +5,7 @@ import cors from "@koa/cors";
 import http from "http";
 import socketio from "socket.io";
 import ParseTorrent from "parse-torrent";
+import mime from "mime";
 
 import {
   ActionDTO,
@@ -56,6 +57,7 @@ function bootstrap(): void {
         });
       }
 
+      // @TODO refactor this to listen on ipc action new-directory...
       const sendVideoData = (): void => {
         const streamTorrent = streamTorrentsRepository.get(key);
         if (!streamTorrent || !streamTorrent.files.length) {
@@ -69,6 +71,8 @@ function bootstrap(): void {
         socket.emit("loaded", {
           playerId,
           streamUri: `stream/${key}/${file.id}`,
+          fileName: file.name,
+          fileType: mime.getType(file.name) || "application/octet-stream",
         });
       };
       setTimeout(sendVideoData, 1000);

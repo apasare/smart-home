@@ -7,6 +7,7 @@ import { dispatchIPCAction } from "./dispatchIpcAction";
 import { IPCActionManager } from "./ipcActionManager";
 
 export class IPCReadStream extends Readable {
+  protected reading = false;
   protected streamId: string = uuidv4();
   protected ipcStreamChunkHandler: IpcStreamChunkHandler;
 
@@ -23,8 +24,6 @@ export class IPCReadStream extends Readable {
 
     this.ipcStreamChunkHandler = new IpcStreamChunkHandler(this, filePath);
     this.ipcManager.pushHandler(this.ipcStreamChunkHandler);
-
-    this._startIpcStream();
   }
 
   protected _startIpcStream(): void {
@@ -52,6 +51,10 @@ export class IPCReadStream extends Readable {
   }
 
   _read(): void {
+    if (!this.reading) {
+      this.reading = true;
+      this._startIpcStream();
+    }
     return;
   }
 

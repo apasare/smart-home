@@ -7,6 +7,8 @@ import { streamTorrentsRepository } from "../../repository";
 import { IPCReadStream, Controller, Get } from "../../service";
 import { streamIpcManager } from "../../singleton";
 
+// const supportedFileTypes = ["video/mp4", "video/webm", "video/ogg"];
+
 @Controller("/stream")
 export class DownloadTorrentFile {
   @Get("/:infoHash/:fileId")
@@ -31,14 +33,13 @@ export class DownloadTorrentFile {
       return;
     }
     const filePath = path.join(torrent.path, file.path);
+    const fileType = mime.getType(file.name) || "application/octet-stream";
+    const fileName = file.name;
 
     // set streaming headers
-    ctx.set(
-      "Content-Type",
-      mime.getType(file.name) || "application/octet-stream"
-    );
+    ctx.set("Content-Type", fileType);
     ctx.set("Accept-Ranges", "bytes");
-    ctx.attachment(file.name, { fallback: false, type: "inline" });
+    ctx.attachment(fileName, { fallback: false, type: "inline" });
     ctx.set("transferMode.dlna.org", "Streaming");
     ctx.set(
       "contentFeatures.dlna.org",

@@ -3,7 +3,7 @@ import Modal from "react-bootstrap/Modal";
 import ResponsiveEmbed from "react-bootstrap/ResponsiveEmbed";
 import uuid from "uuid";
 
-import { io } from "../../service";
+import { playerIo } from "../../service";
 import { API_ENDPOINT } from "../../constants";
 
 interface PlayerModalProps {
@@ -13,8 +13,19 @@ interface PlayerModalProps {
   onHide: () => void;
 }
 
+interface StreamData {
+  fileName: string;
+  fileType: string;
+  streamUrl: string;
+}
+
+const supportedFileTypes = ["video/mp4", "video/webm", "video/ogg"];
+
 function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
-  const [streamUrl, setStreamUrl] = React.useState<string | null>(null);
+  const [streamData, setStreamData] = React.useState<StreamData | null>(null);
+  const [showSpinner, setShowSpinner] = React.useState(true);
+  const [canPlayVideo, setCanPlayVideo] = React.useState(false);
+
   const playerId = React.useMemo(() => {
     return `${itemId}-${uuid.v4()}`;
   }, [itemId]);
@@ -24,10 +35,15 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
       if (data.playerId !== playerId) {
         return;
       }
+      console.log(data);
 
-      if (data.streamUri) {
-        setStreamUrl(`${API_ENDPOINT}${data.streamUri}`);
-      }
+      setShowSpinner(false);
+      setStreamData({
+        streamUrl: `${API_ENDPOINT}${data.streamUri}`,
+        fileName: data.fileName,
+        fileType: data.fileType,
+      });
+      setCanPlayVideo(supportedFileTypes.includes(data.fileType));
     },
     [playerId]
   );
@@ -37,17 +53,17 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
       return;
     }
 
-    io.on("loaded", onLoaded);
-    io.emit("load", {
+    playerIo.on("loaded", onLoaded);
+    playerIo.emit("load", {
       playerId,
       torrentUrl,
     });
 
     return () => {
-      setStreamUrl(null);
-      io.off("loaded", onLoaded);
-      io.emit("stop", {
-        message: "stop it",
+      setStreamData(null);
+      playerIo.off("loaded", onLoaded);
+      playerIo.emit("stop", {
+        playerId,
       });
     };
   }, [show, onLoaded, playerId, torrentUrl]);
@@ -55,13 +71,34 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
   return (
     <Modal size="xl" show={show} onHide={onHide} animation={false}>
       <Modal.Body className="bg-dark">
-        {streamUrl && (
-          <ResponsiveEmbed aspectRatio="16by9">
-            <video className="embed-responsive-item" controls autoPlay playsInline>
-              <source src={streamUrl} type="video/mp4" />
-            </video>
-          </ResponsiveEmbed>
-        )}
+        <ResponsiveEmbed aspectRatio="16by9">
+          <>
+            {showSpinner && (
+              <div className="embed-responsive-item d-flex justify-content-center">
+                <div className="spinner-border text-light m-auto" role="status">
+                  <span className="sr-only">Loading...</span>
+                </div>
+              </div>
+            )}
+            {!!streamData && (
+              <div className="embed-responsive-item d-flex justify-content-center">
+                <div className="m-auto">
+                  <p>{streamData.streamUrl}</p>
+                </div>
+              </div>
+            )}
+            {!!streamData && canPlayVideo && (
+              <video
+                className="embed-responsive-item"
+                controls
+                autoPlay
+                playsInline
+              >
+                <source src={streamData.streamUrl} type={streamData.fileType} />
+              </video>
+            )}
+          </>
+        </ResponsiveEmbed>
       </Modal.Body>
     </Modal>
   );

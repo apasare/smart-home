@@ -12,12 +12,13 @@ function getYoutubeEmbedLink(trailerLink: string) {
 }
 
 interface TrailerModalProps {
-  item: Record<string, any>;
+  trailer: string;
+  title: string;
   show: boolean;
   onHide: () => void;
 }
 
-function TrailerModal({ item, onHide, show }: TrailerModalProps) {
+function TrailerModal({ trailer, title, onHide, show }: TrailerModalProps) {
   return (
     <Modal size="xl" show={show} onHide={onHide} animation={false}>
       <Modal.Body className="bg-dark">
@@ -35,8 +36,8 @@ function TrailerModal({ item, onHide, show }: TrailerModalProps) {
         <ResponsiveEmbed aspectRatio="16by9">
           <iframe
             className="embed-responsive-item"
-            src={getYoutubeEmbedLink(item.trailer)}
-            title={item.title}
+            src={getYoutubeEmbedLink(trailer)}
+            title={title}
             allowFullScreen
             allow="autoplay; encrypted-media"
           ></iframe>
