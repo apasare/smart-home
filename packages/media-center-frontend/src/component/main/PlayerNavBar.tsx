@@ -1,5 +1,6 @@
 import React from "react";
 import Octicon, { DeviceCameraVideo } from "@primer/octicons-react";
+
 import TrailerModal from "./TrailerModal";
 import PlayerModal from "./PlayerModal";
 
@@ -62,7 +63,7 @@ function PlayerNavBar({ itemId, title, trailer, torrents }: PlayerNavBarProps) {
           aria-expanded="false"
           aria-label="Toggle navigation"
         >
-          <Octicon icon={DeviceCameraVideo}></Octicon>
+          <Octicon icon={DeviceCameraVideo} />
         </button>
 
         <div className="collapse navbar-collapse" id="playerMenu">

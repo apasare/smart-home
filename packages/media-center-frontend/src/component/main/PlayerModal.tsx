@@ -1,6 +1,7 @@
 import React from "react";
 import Modal from "react-bootstrap/Modal";
 import ResponsiveEmbed from "react-bootstrap/ResponsiveEmbed";
+import Octicon, { Clippy } from "@primer/octicons-react";
 import * as uuid from "uuid";
 
 import { playerIo } from "../../service";
@@ -26,6 +27,7 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
   const [streamData, setStreamData] = React.useState<StreamData | null>(null);
   const [showSpinner, setShowSpinner] = React.useState(true);
   const [canPlayVideo, setCanPlayVideo] = React.useState(false);
+  const streamUrlRef = React.useRef<HTMLInputElement | null>(null);
 
   const playerId = React.useMemo(() => {
     return `${itemId}-${uuid.v4()}`;
@@ -81,8 +83,30 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
             )}
             {!!streamData && (
               <div className="embed-responsive-item d-flex justify-content-center">
-                <div className="m-auto">
-                  <p>{streamData.streamUrl}</p>
+                <div className="m-auto form-inline">
+                  <input
+                    ref={streamUrlRef}
+                    className="form-control form-control-sm"
+                    type="text"
+                    value={streamData.streamUrl}
+                    readOnly
+                    style={{width: "270px"}}
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-sm btn-light"
+                    title="Copy"
+                    onClick={() => {
+                      if (!streamUrlRef || !streamUrlRef.current) {
+                        return;
+                      }
+                      streamUrlRef.current.select();
+                      streamUrlRef.current.setSelectionRange(0, 99999);
+                      document.execCommand("copy");
+                    }}
+                  >
+                    <Octicon icon={Clippy} />
+                  </button>
                 </div>
               </div>
             )}
