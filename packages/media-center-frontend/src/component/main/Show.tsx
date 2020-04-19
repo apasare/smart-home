@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 
 import { API_HOST } from "../../constants";
 import PlayerNavBar from "./PlayerNavBar";
+import Spinner from "./Spinner";
 
 function Show() {
   const { id } = useParams();
@@ -134,7 +135,11 @@ function Show() {
         </section>
       </section>
     </article>
-  ) : null;
+  ) : (
+    <article>
+      <Spinner />
+    </article>
+  );
 }
 
 export default Show;

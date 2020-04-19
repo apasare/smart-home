@@ -76,7 +76,7 @@ function bootstrapSocketio(server: http.Server): void {
       }
 
       const torrent = torrentContainer.getTorrent(magnetUri.infoHash);
-      if (!torrent) {
+      if (!torrent || !torrent.files.length) {
         const torrent = torrentContainer.addTorrent(magnetUri);
         torrent.once("ready", () => {
           sendVideoData(socket, playerId, torrent);
