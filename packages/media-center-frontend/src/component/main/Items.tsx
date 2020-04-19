@@ -7,21 +7,12 @@ import qs from "querystring";
 import placeholder from "./poster-placeholder.png";
 import { API_HOST } from "../../constants";
 import { useQuery } from "../../hook";
+import Spinner from "./Spinner";
 
 interface ItemsProps {
   apiResource: string;
   getPosterUrl?: Function;
 }
-
-const loader = (
-  <article key="loader" className="m-2 align-self-center">
-    <div className="movie-card d-flex justify-content-center">
-      <div className="spinner-border text-light" role="status">
-        <span className="sr-only">Loading...</span>
-      </div>
-    </div>
-  </article>
-);
 
 function Items({ apiResource, getPosterUrl }: ItemsProps) {
   const [items, setItems] = React.useState<Record<string, any>[]>([]);
@@ -56,6 +47,12 @@ function Items({ apiResource, getPosterUrl }: ItemsProps) {
     })();
   }, [loadMoreItems]);
 
+  const spinner = (
+    <article key="spinner" className="m-2 align-self-center">
+      <Spinner className="movie-card" />
+    </article>
+  );
+
   return (
     <>
       <InfiniteScroll
@@ -64,7 +61,7 @@ function Items({ apiResource, getPosterUrl }: ItemsProps) {
         initialLoad={false}
         hasMore={hasMoreItems}
         loadMore={loadMoreItems}
-        loader={loader}
+        loader={spinner}
         className="d-flex flex-wrap justify-content-start"
       >
         {items.map((item: Record<string, any>) => (

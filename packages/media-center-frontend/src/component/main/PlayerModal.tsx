@@ -5,6 +5,7 @@ import * as uuid from "uuid";
 
 import { playerIo } from "../../service";
 import { API_HOST } from "../../constants";
+import PlayerStats from "./PlayerStats";
 
 interface PlayerModalProps {
   itemId: string;
@@ -61,15 +62,14 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
     return () => {
       setStreamData(null);
       playerIo.off("loaded", onLoaded);
-      playerIo.emit("stop", {
-        playerId,
-      });
+      playerIo.emit("stop", playerId);
     };
   }, [show, onLoaded, playerId, torrentUrl]);
 
   return (
     <Modal size="xl" show={show} onHide={onHide} animation={false}>
       <Modal.Body className="bg-dark">
+        <PlayerStats playerId={playerId} />
         <ResponsiveEmbed aspectRatio="16by9">
           <>
             {showSpinner && (

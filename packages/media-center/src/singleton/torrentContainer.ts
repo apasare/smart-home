@@ -1,5 +1,5 @@
-import WebTorrent from "webtorrent";
 import "../patch/webtorrent";
+import WebTorrent from "webtorrent";
 
 import { TorrentContainer } from "../service";
 

@@ -42,7 +42,31 @@ function sendVideoData(
 function bootstrapSocketio(server: http.Server): void {
   const io = socketio(server);
   const playerNsp = io.of("/player");
+
   playerNsp.on("connection", (socket) => {
+    const statsUpdaters: Map<string, NodeJS.Timeout> = new Map();
+    const startStatsUpdates = (
+      playerId: string,
+      torrent: WebTorrent.Torrent
+    ): void => {
+      const statsUpdater = setInterval(
+        (playerId, torrent) => {
+          socket.emit("stats", {
+            playerId,
+            uploadSpeed: torrent.uploadSpeed,
+            uploaded: torrent.uploaded,
+            downloadSpeed: torrent.downloadSpeed,
+            downloaded: torrent.downloaded,
+            progress: torrent.progress,
+          });
+        },
+        1000,
+        playerId,
+        torrent
+      );
+      statsUpdaters.set(playerId, statsUpdater);
+    };
+
     socket.on("load", (data) => {
       const { playerId, torrentUrl } = data;
       const magnetUri = ParseTorrent(torrentUrl);
@@ -50,22 +74,33 @@ function bootstrapSocketio(server: http.Server): void {
         // TODO: emit error
         return;
       }
+
       const torrent = torrentContainer.getTorrent(magnetUri.infoHash);
       if (!torrent) {
         const torrent = torrentContainer.addTorrent(magnetUri);
         torrent.once("ready", () => {
           sendVideoData(socket, playerId, torrent);
+          startStatsUpdates(playerId, torrent);
         });
         return;
       }
+
       sendVideoData(socket, playerId, torrent);
+      startStatsUpdates(playerId, torrent);
     });
-    // socket.on("stop", (data) => {
-    //   console.log(data);
-    // });
-    // socket.on("disconnect", (...args) => {
-    //   console.log(args);
-    // });
+
+    socket.on("stop", (playerId) => {
+      const statsUpdater = statsUpdaters.get(playerId);
+      if (statsUpdater) {
+        clearInterval(statsUpdater);
+        statsUpdaters.delete(playerId);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      statsUpdaters.forEach(clearInterval);
+      statsUpdaters.clear();
+    });
   });
 }
 

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 
 import { API_HOST } from "../../constants";
 import PlayerNavBar from "./PlayerNavBar";
+import Spinner from "./Spinner";
 
 function Movie() {
   const { id } = useParams();
@@ -18,10 +19,7 @@ function Movie() {
 
   return item ? (
     <article className="movie-article">
-      <section
-        className="row position-relative"
-        title="Movie details"
-      >
+      <section className="row position-relative" title="Movie details">
         <section className="col-sm col-md-4 col-lg-4">
           <img
             className="img-fluid"
@@ -46,7 +44,11 @@ function Movie() {
         </section>
       </section>
     </article>
-  ) : null;
+  ) : (
+    <article>
+      <Spinner />
+    </article>
+  );
 }
 
 export default Movie;
