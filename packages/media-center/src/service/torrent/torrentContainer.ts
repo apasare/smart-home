@@ -5,6 +5,8 @@ import path from "path";
 import ParseTorrent from "parse-torrent";
 import MagnetUri from "magnet-uri";
 import { dispatchIPCAction } from "../ipc";
+import { streamTorrentsRepository } from "../../repository";
+import { generateInfoHashId } from "../../helper";
 
 const defaultTorrentsDownloadDir = process.env.MEDIA_CENTER_DATA_DIR
   ? path.join(process.env.MEDIA_CENTER_DATA_DIR, "torrents")
@@ -17,10 +19,25 @@ export class TorrentContainer {
     protected torrentsUrlCacheDir: string = "cache"
   ) {
     this.torrentClient.on("torrent", (torrent) => {
-      // @TODO implement IpcNewDirectoryAction
-      dispatchIPCAction({
-        type: "new-directory",
-        payload: {
+      if (process.env.ALL_IN_ONE === undefined) {
+        // @TODO implement IpcNewDirectoryAction
+        dispatchIPCAction({
+          type: "new-directory",
+          payload: {
+            infoHash: torrent.infoHash,
+            name: torrent.name,
+            path: torrent.path,
+            files: torrent.files.map((file, index) => ({
+              id: index,
+              path: file.path,
+              name: file.name,
+              size: file.length,
+            })),
+          },
+          forward: ["stream"],
+        });
+      } else {
+        streamTorrentsRepository.set(generateInfoHashId(torrent.infoHash), {
           infoHash: torrent.infoHash,
           name: torrent.name,
           path: torrent.path,
@@ -30,9 +47,8 @@ export class TorrentContainer {
             name: file.name,
             size: file.length,
           })),
-        },
-        forward: ["stream"],
-      });
+        });
+      }
     });
 
     const torrentsCacheFolder = path.join(
@@ -74,7 +90,7 @@ export class TorrentContainer {
     const torrent = this.torrentClient.add(data, {
       path: path.join(this.torrentsDownloadDir, magnetUri.infoHash),
     });
-    torrent.on("ready", () => {
+    torrent.once("ready", () => {
       torrent.deselect(0, torrent.pieces.length - 1, 0);
     });
 

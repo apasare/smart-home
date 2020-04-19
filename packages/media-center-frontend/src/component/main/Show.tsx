@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 
-import { API_ENDPOINT } from "../../constants";
+import { API_HOST } from "../../constants";
 import PlayerNavBar from "./PlayerNavBar";
 
 function Show() {
@@ -21,7 +21,7 @@ function Show() {
 
   React.useEffect(() => {
     (async () => {
-      const response = await fetch(`${API_ENDPOINT}shows/${id}`);
+      const response = await fetch(`${API_HOST}shows/${id}`);
       const item = await response.json();
       setItem(item);
     })();

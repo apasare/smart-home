@@ -1,10 +1,10 @@
 import React from "react";
 import Modal from "react-bootstrap/Modal";
 import ResponsiveEmbed from "react-bootstrap/ResponsiveEmbed";
-import uuid from "uuid";
+import * as uuid from "uuid";
 
 import { playerIo } from "../../service";
-import { API_ENDPOINT } from "../../constants";
+import { API_HOST } from "../../constants";
 
 interface PlayerModalProps {
   itemId: string;
@@ -35,11 +35,10 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
       if (data.playerId !== playerId) {
         return;
       }
-      console.log(data);
 
       setShowSpinner(false);
       setStreamData({
-        streamUrl: `${API_ENDPOINT}${data.streamUri}`,
+        streamUrl: `${API_HOST}${data.streamUri}`,
         fileName: data.fileName,
         fileType: data.fileType,
       });

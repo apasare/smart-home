@@ -5,7 +5,7 @@ import InfiniteScroll from "react-infinite-scroller";
 import qs from "querystring";
 
 import placeholder from "./poster-placeholder.png";
-import { API_ENDPOINT } from "../../constants";
+import { API_HOST } from "../../constants";
 import { useQuery } from "../../hook";
 
 interface ItemsProps {
@@ -37,7 +37,7 @@ function Items({ apiResource, getPosterUrl }: ItemsProps) {
         keywords: query.get("keywords") || "",
       };
       const response = await fetch(
-        `${API_ENDPOINT}${apiResource}?${qs.stringify(queryParams)}`
+        `${API_HOST}${apiResource}?${qs.stringify(queryParams)}`
       );
       const newItems: Record<string, any>[] = await response.json();
 

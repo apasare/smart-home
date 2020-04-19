@@ -1,1 +1,2 @@
-export const API_ENDPOINT = "http://192.168.0.8:4000/";
+export const API_HOST =
+  process.env.REACT_APP_API_HOST || "http://localhost:4000/";

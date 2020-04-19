@@ -5,7 +5,7 @@ import path from "path";
 
 import { streamTorrentsRepository } from "../../repository";
 import { IPCReadStream, Controller, Get } from "../../service";
-import { streamIpcManager } from "../../singleton";
+import { streamIpcManager, torrentContainer } from "../../singleton";
 
 // const supportedFileTypes = ["video/mp4", "video/webm", "video/ogg"];
 
@@ -13,18 +13,17 @@ import { streamIpcManager } from "../../singleton";
 export class DownloadTorrentFile {
   @Get("/:infoHash/:fileId")
   async downloadtorrentFile(ctx: Koa.ParameterizedContext): Promise<void> {
-    // there's a bug when reading from the file for the first time: it hangs
-    // probably because the lock is not released on file :?
-    // for use a 5 sec timeout to stop the request and let the browser try again
-    ctx.req.setTimeout(5000);
+    if (process.env.ALL_IN_ONE === undefined) {
+      ctx.req.setTimeout(5000);
+    }
 
-    const torrent = streamTorrentsRepository.get(ctx.params.infoHash);
-    if (!torrent) {
+    const streamTorrent = streamTorrentsRepository.get(ctx.params.infoHash);
+    if (!streamTorrent) {
       ctx.status = 404;
       ctx.body = `No torrent with id ${ctx.params.infoHash}`;
       return;
     }
-    const file = torrent.files.find(
+    const file = streamTorrent.files.find(
       (file) => file.id === parseInt(ctx.params.fileId)
     );
     if (!file) {
@@ -32,7 +31,7 @@ export class DownloadTorrentFile {
       ctx.body = `No file with id ${ctx.params.fileId}`;
       return;
     }
-    const filePath = path.join(torrent.path, file.path);
+    const filePath = path.join(streamTorrent.path, file.path);
     const fileType = mime.getType(file.name) || "application/octet-stream";
     const fileName = file.name;
 
@@ -69,15 +68,23 @@ export class DownloadTorrentFile {
       ctx.set("Content-Length", file.size.toString());
     }
 
-    const readStream = new IPCReadStream(
-      streamIpcManager,
-      torrent.infoHash,
-      file.id,
-      filePath,
-      range && range.start,
-      range && range.end
-    );
-
-    ctx.body = readStream;
+    if (process.env.ALL_IN_ONE !== undefined) {
+      const torrent = torrentContainer.getTorrent(streamTorrent.infoHash);
+      if (!torrent) {
+        return;
+      }
+      const readStream = torrent.files[file.id].createReadStream(range);
+      ctx.body = readStream;
+    } else {
+      const readStream = new IPCReadStream(
+        streamIpcManager,
+        streamTorrent.infoHash,
+        file.id,
+        filePath,
+        range && range.start,
+        range && range.end
+      );
+      ctx.body = readStream;
+    }
   }
 }

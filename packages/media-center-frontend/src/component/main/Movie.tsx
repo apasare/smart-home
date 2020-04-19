@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 
-import { API_ENDPOINT } from "../../constants";
+import { API_HOST } from "../../constants";
 import PlayerNavBar from "./PlayerNavBar";
 
 function Movie() {
@@ -10,7 +10,7 @@ function Movie() {
 
   React.useEffect(() => {
     (async () => {
-      const response = await fetch(`${API_ENDPOINT}movies/${id}`);
+      const response = await fetch(`${API_HOST}movies/${id}`);
       const item = await response.json();
       setItem(item);
     })();

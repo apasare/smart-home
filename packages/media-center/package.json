@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc -b",
     "watch": "tsc -b -w",
-    "start": "node -r dotenv/config lib/bin/main.js",
+    "start:split": "node -r dotenv/config lib/bin/main.js",
+    "start": "node -r dotenv/config lib/bin/allInOne.js",
     "lint": "eslint \"src/**/*.ts\""
   },
   "devDependencies": {
