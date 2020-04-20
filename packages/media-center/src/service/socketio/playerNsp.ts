@@ -82,12 +82,20 @@ function onLoad(statsUpdaters: StatsUpdaters, socket: socketio.Socket) {
       return;
     }
 
-    const torrent = torrentContainer.getTorrent(magnetUri.infoHash);
+    let torrent = torrentContainer.getTorrent(magnetUri.infoHash);
     if (!torrent || !torrent.files.length) {
-      const torrent = torrentContainer.addTorrent(magnetUri);
+      torrent = torrentContainer.addTorrent(magnetUri);
+    }
+
+    if (!torrent.ready) {
       torrent.once("ready", () => {
-        sendVideoData(socket, playerId, torrent);
-        startStatsUpdates(socket, statsUpdaters, playerId, torrent);
+        sendVideoData(socket, playerId, torrent as WebTorrent.Torrent);
+        startStatsUpdates(
+          socket,
+          statsUpdaters,
+          playerId,
+          torrent as WebTorrent.Torrent
+        );
       });
       return;
     }
