@@ -14,11 +14,7 @@ function bootstrapSocketio(server: http.Server): void {
   io.of("/player").on("connection", playerOnConnection);
 }
 
-function bootstrap(): void {
-  const app = new Koa();
-  const server = http.createServer(app.callback());
-  bootstrapSocketio(server);
-
+function bootstrapKoaApp(app: Koa): void {
   const router = new Router();
 
   registerControllers(router, [
@@ -37,10 +33,19 @@ function bootstrap(): void {
     )
     .use(router.routes())
     .use(router.allowedMethods());
+}
+
+function bootstrap(): void {
+  const app = new Koa();
+  const server = http.createServer(app.callback());
+
+  bootstrapSocketio(server);
+  bootstrapKoaApp(app);
 
   const port = process.env.STREAM_API_SERVER_PORT || 4000;
   server.listen(port, () => {
     console.log(`Streaming API is listening on ${port}`);
   });
 }
+
 bootstrap();
