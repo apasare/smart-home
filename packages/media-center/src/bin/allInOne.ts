@@ -16,24 +16,40 @@ process.env.ALL_IN_ONE = "true";
 import { torrentContainer } from "../singleton/torrentContainer";
 import WebTorrent from "webtorrent";
 
+type GetFileResponse = number | WebTorrent.TorrentFile | null;
+function getFile(torrent: WebTorrent.Torrent, fileId?: number): any[] {
+  if (fileId !== undefined) {
+    return [fileId, torrent.files[fileId]];
+  }
+
+  let responseFile: WebTorrent.TorrentFile | null = null;
+  let responseFileId: number | null = null;
+  torrent.files.forEach((file, index) => {
+    if (responseFile === null || responseFile.length < file.length) {
+      responseFile = file;
+      responseFileId = index;
+    }
+  });
+
+  return [responseFileId, responseFile];
+}
+
 function sendVideoData(
   socket: socketio.Socket,
   playerId: string,
   torrent: WebTorrent.Torrent
 ): void {
   const key = generateInfoHashId(torrent.infoHash);
-  const file = torrent.files
-    .map((file, index) => ({
-      name: file.name,
-      size: file.length,
-      id: index,
-    }))
-    .reduce((previous, current) =>
-      previous && previous.size < current.size ? current : previous
-    );
+  const response = getFile(torrent);
+  if (response[0] === null) {
+    // TODO: emit error
+    return;
+  }
+  const fileId = response[0] as number;
+  const file = response[1] as WebTorrent.TorrentFile;
   socket.emit("loaded", {
     playerId,
-    streamUri: `stream/${key}/${file.id}`,
+    streamUri: `stream/${key}/${fileId}`,
     fileName: file.name,
     fileType: mime.getType(file.name) || "application/octet-stream",
   });
@@ -49,6 +65,8 @@ function bootstrapSocketio(server: http.Server): void {
       playerId: string,
       torrent: WebTorrent.Torrent
     ): void => {
+      const response = getFile(torrent);
+      const file = response[1] as WebTorrent.TorrentFile | null;
       const statsUpdater = setInterval(
         (playerId, torrent) => {
           socket.emit("stats", {
@@ -56,8 +74,9 @@ function bootstrapSocketio(server: http.Server): void {
             uploadSpeed: torrent.uploadSpeed,
             uploaded: torrent.uploaded,
             downloadSpeed: torrent.downloadSpeed,
-            downloaded: torrent.downloaded,
-            progress: torrent.progress,
+            downloaded: (file && file.downloaded) || torrent.downloaded,
+            progress: (file && file.progress) || torrent.progress,
+            size: (file && file.length) || torrent.length,
           });
         },
         1000,
