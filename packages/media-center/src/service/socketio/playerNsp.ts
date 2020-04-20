@@ -6,6 +6,8 @@ import mime from "mime";
 import { torrentContainer } from "../../singleton";
 import { generateInfoHashId } from "../../helper";
 
+type StatsUpdaters = Map<string, NodeJS.Timeout>;
+
 function getFile(torrent: WebTorrent.Torrent, fileId?: number): any[] {
   if (fileId !== undefined) {
     return [fileId, torrent.files[fileId]];
@@ -23,9 +25,9 @@ function getFile(torrent: WebTorrent.Torrent, fileId?: number): any[] {
   return [responseFileId, responseFile];
 }
 
-const statsUpdaters: Map<string, NodeJS.Timeout> = new Map();
 function startStatsUpdates(
   socket: socketio.Socket,
+  statsUpdaters: StatsUpdaters,
   playerId: string,
   torrent: WebTorrent.Torrent
 ): void {
@@ -71,7 +73,7 @@ function sendVideoData(
   });
 }
 
-function onLoad(socket: socketio.Socket) {
+function onLoad(statsUpdaters: StatsUpdaters, socket: socketio.Socket) {
   return (data: Record<string, any>): void => {
     const { playerId, torrentUrl } = data;
     const magnetUri = ParseTorrent(torrentUrl);
@@ -85,31 +87,37 @@ function onLoad(socket: socketio.Socket) {
       const torrent = torrentContainer.addTorrent(magnetUri);
       torrent.once("ready", () => {
         sendVideoData(socket, playerId, torrent);
-        startStatsUpdates(socket, playerId, torrent);
+        startStatsUpdates(socket, statsUpdaters, playerId, torrent);
       });
       return;
     }
 
     sendVideoData(socket, playerId, torrent);
-    startStatsUpdates(socket, playerId, torrent);
+    startStatsUpdates(socket, statsUpdaters, playerId, torrent);
   };
 }
 
-function onStop(playerId: string): void {
-  const statsUpdater = statsUpdaters.get(playerId);
-  if (statsUpdater) {
-    clearInterval(statsUpdater);
-    statsUpdaters.delete(playerId);
-  }
+function onStop(statsUpdaters: StatsUpdaters) {
+  return (playerId: string): void => {
+    const statsUpdater = statsUpdaters.get(playerId);
+    if (statsUpdater) {
+      clearInterval(statsUpdater);
+      statsUpdaters.delete(playerId);
+    }
+  };
 }
 
-function onDisconnect(): void {
-  statsUpdaters.forEach(clearInterval);
-  statsUpdaters.clear();
+function onDisconnect(statsUpdaters: StatsUpdaters) {
+  return (): void => {
+    statsUpdaters.forEach(clearInterval);
+    statsUpdaters.clear();
+  };
 }
 
 export function playerOnConnection(socket: socketio.Socket): void {
-  socket.on("load", onLoad(socket));
-  socket.on("stop", onStop);
-  socket.on("disconnect", onDisconnect);
+  const statsUpdaters: Map<string, NodeJS.Timeout> = new Map();
+
+  socket.on("load", onLoad(statsUpdaters, socket));
+  socket.on("stop", onStop(statsUpdaters));
+  socket.on("disconnect", onDisconnect(statsUpdaters));
 }
