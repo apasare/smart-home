@@ -1,64 +1,46 @@
-// EXPERIMENTAL
-import { spawn, ChildProcess } from "child_process";
-import { IPCActionManager, ForwardToHandler, ActionDTO } from "../service";
+import "reflect-metadata";
+import Koa from "koa";
+import Router from "@koa/router";
+import cors from "@koa/cors";
+import http from "http";
+import socketio from "socket.io";
 
-const MAX_PROCESS_SPAWN_RETRY = 5;
-const processes: Map<string, ChildProcess> = new Map();
+import { registerControllers, playerOnConnection } from "../service";
+import { Torrents, DownloadTorrentFile } from "../controller/stream";
+import { Movies, Animes, Shows } from "../controller/api";
 
-function killAllChildProcesses(): void {
-  processes.forEach((process) => {
-    process.kill("SIGHUP");
-  });
-}
-
-function spawnProcess(
-  name: string,
-  command: string[],
-  retry: number = 0
-): ChildProcess {
-  const cmd = command.shift();
-  if (!cmd) {
-    throw new Error(`No command`);
-  }
-  const childProcess = spawn(cmd, command, {
-    cwd: __dirname,
-    stdio: ["inherit", "inherit", "inherit", "ipc"],
-  });
-  processes.set(name, childProcess);
-
-  childProcess.on("close", (code) => {
-    if (code === null || code === 0) {
-      return;
-    }
-
-    if (retry++ >= MAX_PROCESS_SPAWN_RETRY) {
-      return killAllChildProcesses();
-    }
-
-    console.log(`retries spawning ${name}: ${retry}`);
-    command.unshift(cmd);
-    spawnProcess(name, command, retry);
-  });
-
-  return childProcess;
+function bootstrapSocketio(server: http.Server): void {
+  const io = socketio(server);
+  io.of("/player").on("connection", playerOnConnection);
 }
 
 function bootstrap(): void {
-  const streamProcess = spawnProcess("stream", ["node", "streamApi.js"]);
-  const torrentProcess = spawnProcess("torrent", ["node", "torrent.js"]);
-  // const apiProcess = spawnProcess("api", ["node", "api.js"]);
+  const app = new Koa();
+  const server = http.createServer(app.callback());
+  bootstrapSocketio(server);
 
-  const ipcActionManager = new IPCActionManager([
-    new ForwardToHandler(processes),
+  const router = new Router();
+
+  registerControllers(router, [
+    Torrents,
+    DownloadTorrentFile,
+    Movies,
+    Animes,
+    Shows,
   ]);
-  const ipcActionManagerCallback = async (
-    message: ActionDTO
-  ): Promise<void> => {
-    await ipcActionManager.handle(message);
-  };
 
-  // apiProcess.on("message", ipcActionManagerCallback);
-  torrentProcess.on("message", ipcActionManagerCallback);
-  streamProcess.on("message", ipcActionManagerCallback);
+  app
+    .use(
+      cors({
+        maxAge: 600,
+      })
+    )
+    .use(router.routes())
+    .use(router.allowedMethods());
+
+  const port = process.env.STREAM_API_SERVER_PORT || 4000;
+  server.listen(port, () => {
+    console.log(`Streaming API is listening on ${port}`);
+  });
 }
 bootstrap();

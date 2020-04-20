@@ -13,7 +13,7 @@ import { streamIpcManager, torrentContainer } from "../../singleton";
 export class DownloadTorrentFile {
   @Get("/:infoHash/:fileId")
   async downloadtorrentFile(ctx: Koa.ParameterizedContext): Promise<void> {
-    if (process.env.ALL_IN_ONE === undefined) {
+    if (process.env.SPLIT !== undefined) {
       ctx.req.setTimeout(5000);
     }
 
@@ -68,14 +68,7 @@ export class DownloadTorrentFile {
       ctx.set("Content-Length", file.size.toString());
     }
 
-    if (process.env.ALL_IN_ONE !== undefined) {
-      const torrent = torrentContainer.getTorrent(streamTorrent.infoHash);
-      if (!torrent) {
-        return;
-      }
-      const readStream = torrent.files[file.id].createReadStream(range);
-      ctx.body = readStream;
-    } else {
+    if (process.env.SPLIT !== undefined) {
       const readStream = new IPCReadStream(
         streamIpcManager,
         streamTorrent.infoHash,
@@ -84,6 +77,13 @@ export class DownloadTorrentFile {
         range && range.start,
         range && range.end
       );
+      ctx.body = readStream;
+    } else {
+      const torrent = torrentContainer.getTorrent(streamTorrent.infoHash);
+      if (!torrent) {
+        return;
+      }
+      const readStream = torrent.files[file.id].createReadStream(range);
       ctx.body = readStream;
     }
   }

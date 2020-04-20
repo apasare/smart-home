@@ -19,7 +19,7 @@ export class TorrentContainer {
     protected torrentsUrlCacheDir: string = "cache"
   ) {
     this.torrentClient.on("torrent", (torrent) => {
-      if (process.env.ALL_IN_ONE === undefined) {
+      if (process.env.SPLIT !== undefined) {
         // @TODO implement IpcNewDirectoryAction
         dispatchIPCAction({
           type: "new-directory",
