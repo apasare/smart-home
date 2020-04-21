@@ -17,20 +17,6 @@ export class TorrentContainer {
     protected torrentsDownloadDir: string = defaultTorrentsDownloadDir,
     protected torrentsUrlCacheDir: string = "cache"
   ) {
-    this.torrentClient.on("torrent", (torrent) => {
-      streamTorrentsRepository.set(generateInfoHashId(torrent.infoHash), {
-        infoHash: torrent.infoHash,
-        name: torrent.name,
-        path: torrent.path,
-        files: torrent.files.map((file, index) => ({
-          id: index,
-          path: file.path,
-          name: file.name,
-          size: file.length,
-        })),
-      });
-    });
-
     const torrentsCacheFolder = path.join(
       torrentsDownloadDir,
       torrentsUrlCacheDir
@@ -57,21 +43,35 @@ export class TorrentContainer {
     }
 
     const data = ParseTorrent.toMagnetURI(magnetUri);
-    fs.writeFileSync(
-      path.join(
-        this.torrentsDownloadDir,
-        this.torrentsUrlCacheDir,
-        magnetUri.infoHash
-      ),
-      data,
-      { encoding: "utf8" }
-    );
 
     const torrent = this.torrentClient.add(data, {
       path: path.join(this.torrentsDownloadDir, magnetUri.infoHash),
     });
     torrent.once("ready", () => {
       torrent.deselect(0, torrent.pieces.length - 1, 0);
+
+      streamTorrentsRepository.set(generateInfoHashId(torrent.infoHash), {
+        infoHash: torrent.infoHash,
+        name: torrent.name,
+        path: torrent.path,
+        files: torrent.files.map((file, index) => ({
+          id: index,
+          path: file.path,
+          name: file.name,
+          size: file.length,
+        })),
+      });
+
+      fs.writeFileSync(
+        path.join(
+          this.torrentsDownloadDir,
+          this.torrentsUrlCacheDir,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          magnetUri.infoHash!
+        ),
+        data,
+        { encoding: "utf8" }
+      );
     });
 
     return torrent;

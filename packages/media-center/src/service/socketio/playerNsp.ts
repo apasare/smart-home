@@ -93,6 +93,14 @@ function onLoad(
       let torrent = torrentContainer.getTorrent(magnetUri.infoHash);
       if (!torrent || !torrent.files.length) {
         torrent = torrentContainer.addTorrent(magnetUri);
+        torrent.once("noPeers", (announceType) => {
+          // TODO: emit error
+          console.log(announceType);
+        });
+        torrent.once("error", (error) => {
+          // TODO: emit error
+          console.error(error);
+        });
       }
 
       if (!torrent.ready) {
