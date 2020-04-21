@@ -67,7 +67,7 @@ function Show({ apiResource, getPosterUrl }: ShowProps) {
             type="button"
             className={classes}
             data-episode={episode.episode}
-            onClick={() => onEpisodeBtnClick(episode.episode)}
+            onClick={() => onEpisodeBtnClick(parseInt(episode.episode))}
           >
             {episode.episode}. {episode.title}
           </button>
