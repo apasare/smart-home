@@ -81,37 +81,43 @@ function onLoad(
 ) {
   return (data: Record<string, any>): void => {
     const { playerId, torrentUrl } = data;
-    const magnetUri = ParseTorrent(torrentUrl);
-    if (!magnetUri.infoHash) {
+
+    try {
+      const magnetUri = ParseTorrent(torrentUrl);
+      if (!magnetUri.infoHash) {
+        // TODO: emit error
+        return;
+      }
+      activePlayers.set(playerId, true);
+
+      let torrent = torrentContainer.getTorrent(magnetUri.infoHash);
+      if (!torrent || !torrent.files.length) {
+        torrent = torrentContainer.addTorrent(magnetUri);
+      }
+
+      if (!torrent.ready) {
+        torrent.once("ready", () => {
+          if (!activePlayers.has(playerId)) {
+            return;
+          }
+
+          sendVideoData(socket, playerId, torrent as WebTorrent.Torrent);
+          startStatsUpdates(
+            socket,
+            statsUpdaters,
+            playerId,
+            torrent as WebTorrent.Torrent
+          );
+        });
+        return;
+      }
+
+      sendVideoData(socket, playerId, torrent);
+      startStatsUpdates(socket, statsUpdaters, playerId, torrent);
+    } catch (error) {
+      console.error(error);
       // TODO: emit error
-      return;
     }
-    activePlayers.set(playerId, true);
-
-    let torrent = torrentContainer.getTorrent(magnetUri.infoHash);
-    if (!torrent || !torrent.files.length) {
-      torrent = torrentContainer.addTorrent(magnetUri);
-    }
-
-    if (!torrent.ready) {
-      torrent.once("ready", () => {
-        if (!activePlayers.has(playerId)) {
-          return;
-        }
-
-        sendVideoData(socket, playerId, torrent as WebTorrent.Torrent);
-        startStatsUpdates(
-          socket,
-          statsUpdaters,
-          playerId,
-          torrent as WebTorrent.Torrent
-        );
-      });
-      return;
-    }
-
-    sendVideoData(socket, playerId, torrent);
-    startStatsUpdates(socket, statsUpdaters, playerId, torrent);
   };
 }
 
