@@ -102,7 +102,7 @@ function PlayerModal({
                 </div>
               </div>
             )}
-            {!!streamData && (
+            {!!streamData && !canPlayVideo && (
               <div className="embed-responsive-item d-flex justify-content-center">
                 <div className="m-auto form-inline">
                   <input
@@ -114,7 +114,6 @@ function PlayerModal({
                     style={{ width: "270px" }}
                   />
                   <button
-                    type="submit"
                     className="btn btn-sm btn-light"
                     title="Copy"
                     onClick={() => {
