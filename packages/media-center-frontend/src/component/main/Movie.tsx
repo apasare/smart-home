@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 
+import placeholder from "./poster-placeholder.png";
 import { API_HOST } from "../../constants";
 import PlayerNavBar from "./PlayerNavBar";
 import Spinner from "./Spinner";
@@ -23,7 +24,7 @@ function Movie() {
         <section className="col-sm col-md-4 col-lg-4">
           <img
             className="img-fluid"
-            src={item.images.banner}
+            src={item.images.poster || placeholder}
             alt={item.title}
           />
         </section>

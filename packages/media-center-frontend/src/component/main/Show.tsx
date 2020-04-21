@@ -1,11 +1,17 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 
+import placeholder from "./poster-placeholder.png";
 import { API_HOST } from "../../constants";
 import PlayerNavBar from "./PlayerNavBar";
 import Spinner from "./Spinner";
 
-function Show() {
+interface ShowProps {
+  apiResource: string;
+  getPosterUrl?: Function;
+}
+
+function Show({ apiResource, getPosterUrl }: ShowProps) {
   const { id } = useParams();
   const [item, setItem] = React.useState<any>(null);
   const [activeSeason, setActiveSeason] = React.useState<number>(1);
@@ -22,11 +28,11 @@ function Show() {
 
   React.useEffect(() => {
     (async () => {
-      const response = await fetch(`${API_HOST}shows/${id}`);
+      const response = await fetch(`${API_HOST}${apiResource}/${id}`);
       const item = await response.json();
       setItem(item);
     })();
-  }, [id]);
+  }, [id, apiResource]);
 
   const seasons: JSX.Element[] = [];
   const episodes: JSX.Element[] = [];
@@ -49,11 +55,11 @@ function Show() {
     }
 
     item.episodes
-      .filter((episode) => episode.season === activeSeason)
+      .filter((episode) => parseInt(episode.season) === activeSeason)
       .sort((eA, eB) => eA.episode - eB.episode)
       .forEach((episode) => {
         const classes = `list-group-item list-group-item-action bg-dark text-light btn-sm${
-          episode.episode === activeEpisode ? " active" : ""
+          parseInt(episode.episode) === activeEpisode ? " active" : ""
         }`;
         episodes.push(
           <button
@@ -71,7 +77,8 @@ function Show() {
   const activeEpisodeData = item
     ? item.episodes.find(
         (episode) =>
-          episode.season === activeSeason && episode.episode === activeEpisode
+          parseInt(episode.season) === activeSeason &&
+          parseInt(episode.episode) === activeEpisode
       )
     : null;
 
@@ -81,7 +88,11 @@ function Show() {
         <section className="col col-auto" title="show poster">
           <img
             className="img-fluid"
-            src={item.images.banner}
+            src={
+              getPosterUrl
+                ? getPosterUrl(item)
+                : item.images.poster || placeholder
+            }
             alt={item.title}
             width="134"
           />
@@ -124,14 +135,14 @@ function Show() {
                 {activeEpisodeData.episode}
               </span>
               <p className="mt-3 mb-5">{activeEpisodeData.overview}</p>
+
+              <PlayerNavBar
+                itemId={activeEpisodeData.tvdb_id}
+                title={activeEpisodeData.title}
+                torrents={{ en: activeEpisodeData.torrents }}
+              />
             </>
           )}
-
-          <PlayerNavBar
-            itemId={activeEpisodeData.tvdb_id}
-            title={activeEpisodeData.title}
-            torrents={{ en: activeEpisodeData.torrents }}
-          />
         </section>
       </section>
     </article>

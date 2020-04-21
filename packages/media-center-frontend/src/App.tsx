@@ -2,8 +2,13 @@ import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 
 import "./App.css";
-import { NavBar, Movies, Movie, Shows, Animes, Show } from "./component";
-import { GlobalContext, initialGlobalState, globalStateReducer } from "./context/GlobalContext";
+import { NavBar, Movies, Movie, Shows, Show, Animes } from "./component";
+import {
+  GlobalContext,
+  initialGlobalState,
+  globalStateReducer,
+} from "./context/GlobalContext";
+import { getAnimePosterUrl } from "./helper";
 
 function App() {
   const [state, dispatch] = React.useReducer(
@@ -12,7 +17,7 @@ function App() {
   );
 
   return (
-    <GlobalContext.Provider value={{state, dispatch}}>
+    <GlobalContext.Provider value={{ state, dispatch }}>
       <div className="container-fluid">
         <NavBar />
 
@@ -26,17 +31,20 @@ function App() {
             </Route>
 
             <Route path="/shows/:id">
-              <Show />
+              <Show apiResource="shows" />
             </Route>
             <Route path="/shows">
               <Shows />
             </Route>
 
+            <Route path="/animes/:id">
+              <Show apiResource="animes" getPosterUrl={getAnimePosterUrl} />
+            </Route>
             <Route path="/animes">
               <Animes />
             </Route>
 
-            <Route exact path="/">
+            <Route path="/">
               <Redirect to="/movies" />
             </Route>
           </Switch>
