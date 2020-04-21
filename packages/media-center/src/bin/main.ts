@@ -6,7 +6,7 @@ import http from "http";
 import socketio from "socket.io";
 
 import { registerControllers, playerOnConnection } from "../service";
-import { Torrents, DownloadTorrentFile } from "../controller/stream";
+import { Torrents, DownloadTorrentFile, Subtitles } from "../controller/stream";
 import { Movies, Animes, Shows } from "../controller/api";
 
 function bootstrapSocketio(server: http.Server): void {
@@ -20,6 +20,7 @@ function bootstrapKoaApp(app: Koa): void {
   registerControllers(router, [
     Torrents,
     DownloadTorrentFile,
+    Subtitles,
     Movies,
     Animes,
     Shows,

@@ -1,4 +1,5 @@
 import React from "react";
+import ReactDom from "react-dom";
 import Modal from "react-bootstrap/Modal";
 import ResponsiveEmbed from "react-bootstrap/ResponsiveEmbed";
 import Octicon, { Clippy } from "@primer/octicons-react";
@@ -10,6 +11,9 @@ import PlayerStats from "./PlayerStats";
 
 interface PlayerModalProps {
   itemId: string;
+  imdbId?: string;
+  season?: number;
+  episode?: number;
   torrentUrl: string;
   show: boolean;
   onHide: () => void;
@@ -19,11 +23,20 @@ interface StreamData {
   fileName: string;
   fileType: string;
   streamUrl: string;
+  subUrl: string;
 }
 
 const supportedFileTypes = ["video/mp4", "video/webm", "video/ogg"];
 
-function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
+function PlayerModal({
+  itemId,
+  imdbId,
+  season,
+  episode,
+  torrentUrl,
+  onHide,
+  show,
+}: PlayerModalProps) {
   const [streamData, setStreamData] = React.useState<StreamData | null>(null);
   const [showSpinner, setShowSpinner] = React.useState(true);
   const [canPlayVideo, setCanPlayVideo] = React.useState(false);
@@ -39,15 +52,23 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
         return;
       }
 
-      setShowSpinner(false);
-      setStreamData({
-        streamUrl: `${API_HOST}${data.streamUri}`,
-        fileName: data.fileName,
-        fileType: data.fileType,
+      ReactDom.unstable_batchedUpdates(() => {
+        setShowSpinner(false);
+        setStreamData({
+          streamUrl: `${API_HOST}${data.streamUri}`,
+          subUrl: `${API_HOST}${data.streamUri.replace(
+            "stream",
+            "sub"
+          )}?imdbid=${
+            imdbId || itemId
+          }&season=${season}&episode=${episode}&lang=en`,
+          fileName: data.fileName,
+          fileType: data.fileType,
+        });
+        setCanPlayVideo(supportedFileTypes.includes(data.fileType));
       });
-      setCanPlayVideo(supportedFileTypes.includes(data.fileType));
     },
-    [playerId]
+    [playerId, itemId, imdbId, season, episode]
   );
 
   React.useEffect(() => {
@@ -90,7 +111,7 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
                     type="text"
                     value={streamData.streamUrl}
                     readOnly
-                    style={{width: "270px"}}
+                    style={{ width: "270px" }}
                   />
                   <button
                     type="submit"
@@ -116,8 +137,16 @@ function PlayerModal({ itemId, torrentUrl, onHide, show }: PlayerModalProps) {
                 controls
                 autoPlay
                 playsInline
+                crossOrigin="use-credential"
               >
                 <source src={streamData.streamUrl} type={streamData.fileType} />
+                <track
+                  label="English"
+                  kind="subtitles"
+                  srcLang="en"
+                  src={streamData.subUrl}
+                  default
+                />
               </video>
             )}
           </>

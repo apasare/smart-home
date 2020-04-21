@@ -33,7 +33,11 @@ export class TorrentContainer {
         path.join(torrentsCacheFolder, magnetUriPath),
         { encoding: "utf8" }
       );
-      this.addTorrent(ParseTorrent(magnetUriData));
+      try {
+        this.addTorrent(ParseTorrent(magnetUriData));
+      } catch (error) {
+        // silent
+      }
     });
   }
 

@@ -1,5 +1,4 @@
 import Koa from "koa";
-import mime from "mime";
 import rangeParser from "range-parser";
 
 import { streamTorrentsRepository } from "../../repository";
@@ -10,29 +9,28 @@ import { torrentContainer } from "../../singleton";
 
 @Controller("/stream")
 export class DownloadTorrentFile {
-  @Get("/:infoHash/:fileId")
-  async downloadtorrentFile(ctx: Koa.ParameterizedContext): Promise<void> {
-    const streamTorrent = streamTorrentsRepository.get(ctx.params.infoHash);
+  @Get("/:torrentKey/:fileId")
+  async downloadTorrentFile(ctx: Koa.ParameterizedContext): Promise<void> {
+    const { torrentKey, fileId } = ctx.params;
+    const streamTorrent = streamTorrentsRepository.get(torrentKey);
     if (!streamTorrent) {
       ctx.status = 404;
-      ctx.body = `No torrent with id "${ctx.params.infoHash}"`;
+      ctx.body = `No torrent with id "${torrentKey}"`;
       return;
     }
     const file = streamTorrent.files.find(
-      (file) => file.id === parseInt(ctx.params.fileId)
+      (file) => file.id === parseInt(fileId)
     );
     if (!file) {
       ctx.status = 404;
-      ctx.body = `No file with id "${ctx.params.fileId}"`;
+      ctx.body = `No file with id "${fileId}"`;
       return;
     }
-    const fileType = mime.getType(file.name) || "application/octet-stream";
     const fileName = file.name;
 
     // set streaming headers
-    ctx.set("Content-Type", fileType);
-    ctx.set("Accept-Ranges", "bytes");
     ctx.attachment(fileName, { fallback: false, type: "inline" });
+    ctx.set("Accept-Ranges", "bytes");
     ctx.set("transferMode.dlna.org", "Streaming");
     ctx.set(
       "contentFeatures.dlna.org",

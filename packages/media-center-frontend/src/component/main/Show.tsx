@@ -138,6 +138,9 @@ function Show({ apiResource, getPosterUrl }: ShowProps) {
 
               <PlayerNavBar
                 itemId={activeEpisodeData.tvdb_id}
+                season={activeSeason}
+                episode={activeEpisode}
+                imdbId={item.imdb_id}
                 title={activeEpisodeData.title}
                 torrents={{ en: activeEpisodeData.torrents }}
               />

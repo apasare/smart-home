@@ -6,12 +6,23 @@ import PlayerModal from "./PlayerModal";
 
 interface PlayerNavBarProps {
   itemId: string;
+  imdbId?: string;
+  season?: number;
+  episode?: number;
   title: string;
   trailer?: string;
   torrents: Record<string, any>;
 }
 
-function PlayerNavBar({ itemId, title, trailer, torrents }: PlayerNavBarProps) {
+function PlayerNavBar({
+  itemId,
+  imdbId,
+  season,
+  episode,
+  title,
+  trailer,
+  torrents,
+}: PlayerNavBarProps) {
   const [showTrailer, setShowTrailer] = React.useState(false);
   const [showPlayer, setShowPlayer] = React.useState(false);
 
@@ -140,6 +151,9 @@ function PlayerNavBar({ itemId, title, trailer, torrents }: PlayerNavBarProps) {
 
       <PlayerModal
         itemId={itemId}
+        imdbId={imdbId}
+        season={season}
+        episode={episode}
         torrentUrl={
           audioLanguage && resolution
             ? torrents[audioLanguage][resolution].url
