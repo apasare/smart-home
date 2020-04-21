@@ -1,11 +1,10 @@
 import Koa from "koa";
 import mime from "mime";
 import rangeParser from "range-parser";
-import path from "path";
 
 import { streamTorrentsRepository } from "../../repository";
-import { IPCReadStream, Controller, Get } from "../../service";
-import { streamIpcManager, torrentContainer } from "../../singleton";
+import { Controller, Get } from "../../service";
+import { torrentContainer } from "../../singleton";
 
 // const supportedFileTypes = ["video/mp4", "video/webm", "video/ogg"];
 
@@ -13,14 +12,10 @@ import { streamIpcManager, torrentContainer } from "../../singleton";
 export class DownloadTorrentFile {
   @Get("/:infoHash/:fileId")
   async downloadtorrentFile(ctx: Koa.ParameterizedContext): Promise<void> {
-    if (process.env.SPLIT !== undefined) {
-      ctx.req.setTimeout(5000);
-    }
-
     const streamTorrent = streamTorrentsRepository.get(ctx.params.infoHash);
     if (!streamTorrent) {
       ctx.status = 404;
-      ctx.body = `No torrent with id ${ctx.params.infoHash}`;
+      ctx.body = `No torrent with id "${ctx.params.infoHash}"`;
       return;
     }
     const file = streamTorrent.files.find(
@@ -28,10 +23,9 @@ export class DownloadTorrentFile {
     );
     if (!file) {
       ctx.status = 404;
-      ctx.body = `No file with id ${ctx.params.fileId}`;
+      ctx.body = `No file with id "${ctx.params.fileId}"`;
       return;
     }
-    const filePath = path.join(streamTorrent.path, file.path);
     const fileType = mime.getType(file.name) || "application/octet-stream";
     const fileName = file.name;
 
@@ -68,23 +62,11 @@ export class DownloadTorrentFile {
       ctx.set("Content-Length", file.size.toString());
     }
 
-    if (process.env.SPLIT !== undefined) {
-      const readStream = new IPCReadStream(
-        streamIpcManager,
-        streamTorrent.infoHash,
-        file.id,
-        filePath,
-        range && range.start,
-        range && range.end
-      );
-      ctx.body = readStream;
-    } else {
-      const torrent = torrentContainer.getTorrent(streamTorrent.infoHash);
-      if (!torrent) {
-        return;
-      }
-      const readStream = torrent.files[file.id].createReadStream(range);
-      ctx.body = readStream;
+    const torrent = torrentContainer.getTorrent(streamTorrent.infoHash);
+    if (!torrent) {
+      return;
     }
+    const readStream = torrent.files[file.id].createReadStream(range);
+    ctx.body = readStream;
   }
 }
