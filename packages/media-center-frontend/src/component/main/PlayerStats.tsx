@@ -63,8 +63,8 @@ function PlayerStats({ playerId }: PlayerStatsProps) {
             {toReadable(stats.downloadSpeed)} <Octicon icon={ArrowDown} />
           </div>
           <div className="m-auto text-info">
-            {(stats.progress * 100).toFixed(2)} % &middot;{" "}
-            {toReadable(stats.downloaded)} / {toReadable(stats.size)}
+            {(stats.progress * 100).toFixed(2)} % (
+            {toReadable(stats.downloaded)} / {toReadable(stats.size)})
           </div>
           <div className="text-danger">
             {toReadable(stats.uploadSpeed)} <Octicon icon={ArrowUp} />
