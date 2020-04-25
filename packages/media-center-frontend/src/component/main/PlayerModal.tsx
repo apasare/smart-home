@@ -8,6 +8,7 @@ import * as uuid from "uuid";
 import { playerIo } from "../../service";
 import { API_HOST } from "../../constants";
 import PlayerStats from "./PlayerStats";
+import VideoTracks from "./VideoTracks";
 
 interface PlayerModalProps {
   itemId: string;
@@ -53,15 +54,21 @@ function PlayerModal({
       }
 
       ReactDom.unstable_batchedUpdates(() => {
+        let subUrl = `${API_HOST}${data.streamUri.replace(
+          "stream",
+          "sub"
+        )}?imdbid=${imdbId || itemId}`;
+        if (season) {
+          subUrl += `season=${season}`;
+        }
+        if (episode) {
+          subUrl += `episode=${episode}`;
+        }
+
         setShowSpinner(false);
         setStreamData({
           streamUrl: `${API_HOST}${data.streamUri}`,
-          subUrl: `${API_HOST}${data.streamUri.replace(
-            "stream",
-            "sub"
-          )}?imdbid=${
-            imdbId || itemId
-          }&season=${season}&episode=${episode}&lang=en`,
+          subUrl,
           fileName: data.fileName,
           fileType: data.fileType,
         });
@@ -139,13 +146,7 @@ function PlayerModal({
                 crossOrigin="use-credential"
               >
                 <source src={streamData.streamUrl} type={streamData.fileType} />
-                <track
-                  label="English"
-                  kind="subtitles"
-                  srcLang="en"
-                  src={streamData.subUrl}
-                  default
-                />
+                <VideoTracks subUrl={streamData.subUrl} defaultLang="en" />
               </video>
             )}
           </>

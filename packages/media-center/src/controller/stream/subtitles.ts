@@ -2,17 +2,33 @@ import Koa from "koa";
 import OS from "opensubtitles-api";
 import axios from "axios";
 import srt2vtt from "srt-to-vtt";
+import memoize from "memoizee";
 
 import { streamTorrentsRepository } from "../../repository";
 import { Controller, Get } from "../../service";
 import { torrentContainer } from "../../singleton";
 
-const openSubtitles = new OS({
-  useragent: "Popcorn Time NodeJS",
-});
-
 @Controller("/sub")
 export class Subtitles {
+  protected openSubtitles: OS;
+  protected openSubtitlesSearch: Function;
+
+  constructor() {
+    this.openSubtitles = new OS({
+      useragent: "Popcorn Time NodeJS",
+    });
+
+    this.openSubtitlesSearch = memoize(
+      this.openSubtitles.search.bind(this.openSubtitles),
+      {
+        maxAge: 24 * 3600 * 1000,
+        promise: true,
+        primitive: true,
+        normalizer: JSON.stringify,
+      }
+    );
+  }
+
   @Get("/:torrentKey/:fileId")
   async listSubtitles(ctx: Koa.ParameterizedContext): Promise<void> {
     const { torrentKey, fileId } = ctx.params;
@@ -29,7 +45,7 @@ export class Subtitles {
     }
 
     const file = torrent.files[fileId];
-    const subtitles = await openSubtitles.search({
+    const subtitles = await this.openSubtitlesSearch({
       extensions: ["srt", "vtt"],
       filesize: file.length,
       filename: file.name,
