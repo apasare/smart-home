@@ -12,7 +12,8 @@ export class ButterController {
   protected itemCallback: Function;
 
   protected maxAgeCollection = 24 * 3600 * 1000; // 1 day
-  protected maxAgeItem = 7 * 24 * 3600 * 1000; // 1 week
+  protected maxAgeItem = 24 * 3600 * 1000; // 1 day
+  protected defaultSort = "trending";
 
   constructor(collectionCallback: Function, itemCallback: Function) {
     this.collectionCallback = memoize(collectionCallback, {
@@ -31,7 +32,7 @@ export class ButterController {
   protected async getCollection<T>(query: any): Promise<T[]> {
     const page = parseInt(query.page) || 1;
     const params: ButterCollectionParams = {
-      sort: query.sort,
+      sort: query.sort || this.defaultSort,
       genre: query.genre,
       keywords: query.keywords,
     };

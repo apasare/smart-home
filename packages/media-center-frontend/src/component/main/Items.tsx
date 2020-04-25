@@ -8,6 +8,7 @@ import placeholder from "./poster-placeholder.png";
 import { API_HOST } from "../../constants";
 import { useQuery } from "../../hook";
 import Spinner from "./Spinner";
+import { defaultSort, defaultOrder, defaultGenre } from "../../helper";
 
 interface ItemsProps {
   apiResource: string;
@@ -26,6 +27,9 @@ function Items({ apiResource, getPosterUrl }: ItemsProps) {
       const queryParams = {
         page,
         keywords: query.get("keywords") || "",
+        sort: query.get("sort") || defaultSort,
+        order: query.get("order") || defaultOrder,
+        genre: query.get("genre") || defaultGenre,
       };
       const response = await fetch(
         `${API_HOST}${apiResource}?${qs.stringify(queryParams)}`

@@ -2,7 +2,7 @@ import { useLocation } from "react-router-dom";
 
 const queryParams = new Map();
 
-export function useQuery() {
+export function useQuery(): URLSearchParams {
   const location = useLocation();
 
   if (!queryParams.has(location.search)) {
