@@ -1,8 +1,10 @@
 import React from "react";
-import Octicon, { DeviceCameraVideo } from "@primer/octicons-react";
+import Octicon, { DeviceCameraVideo, Play } from "@primer/octicons-react";
 
 import TrailerModal from "./TrailerModal";
 import PlayerModal from "./PlayerModal";
+import { GlobalContext } from "../../context";
+import { AvailablePlayers, AvailablePlayer } from "../../interface";
 
 interface PlayerNavBarProps {
   itemId: string;
@@ -14,6 +16,8 @@ interface PlayerNavBarProps {
   torrents: Record<string, any>;
 }
 
+const cachedAvailablePlayer: Map<string, any> = new Map();
+
 function PlayerNavBar({
   itemId,
   imdbId,
@@ -23,6 +27,7 @@ function PlayerNavBar({
   trailer,
   torrents,
 }: PlayerNavBarProps) {
+  const globalContext = React.useContext(GlobalContext);
   const [showTrailer, setShowTrailer] = React.useState(false);
   const [showPlayer, setShowPlayer] = React.useState(false);
 
@@ -36,6 +41,23 @@ function PlayerNavBar({
   const resolutions = audioLanguage
     ? Object.keys(torrents[audioLanguage]).filter((res) => res !== "0")
     : [];
+
+  const [playerReference, setPlayerReference] = React.useState("browser");
+  const players: AvailablePlayers = [
+    { type: "browser", ref: "browser", name: "Browser" },
+  ];
+  globalContext.state.dlnaPlayers.forEach((player) =>
+    players.push({
+      type: "dlna",
+      ref: player.host,
+      name: player.name,
+    })
+  );
+  const availablePlayer: AvailablePlayer =
+    cachedAvailablePlayer.get(playerReference) ||
+    players.find((player) => player.ref === playerReference) ||
+    players[0];
+  cachedAvailablePlayer.set(playerReference, availablePlayer);
 
   const toggleShowTrailer = React.useCallback(
     () => setShowTrailer((showTrailer) => !showTrailer),
@@ -54,6 +76,12 @@ function PlayerNavBar({
   const onResolutionChange = React.useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       setResolution(event.currentTarget.value);
+    },
+    []
+  );
+  const onPlayerChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      setPlayerReference(event.currentTarget.value);
     },
     []
   );
@@ -129,12 +157,30 @@ function PlayerNavBar({
                 </select>
               </>
             )}
+
+            {players.length > 1 && (
+              <select
+                id="players"
+                className="custom-select my-1"
+                onChange={onPlayerChange}
+                defaultValue={playerReference}
+                title="Players"
+                style={{ width: 100 }}
+              >
+                {players.map((player) => (
+                  <option key={player.ref} value={player.ref}>
+                    {player.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               type="button"
               className="btn btn-light"
               onClick={toggleShowPlayer}
+              title="Play"
             >
-              Play
+              <Octicon icon={Play} />
             </button>
           </form>
         </div>
@@ -150,6 +196,7 @@ function PlayerNavBar({
       )}
 
       <PlayerModal
+        player={availablePlayer}
         itemId={itemId}
         imdbId={imdbId}
         season={season}

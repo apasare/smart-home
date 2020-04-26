@@ -3,11 +3,16 @@ import ParseTorrent from "parse-torrent";
 import WebTorrent from "webtorrent";
 import mime from "mime";
 
-import { torrentContainer } from "../../singleton";
+import { torrentContainer, dlnaList, findDlnaPlayer } from "../../singleton";
 import { generateInfoHashId } from "../../helper";
 
 type ActivePlayers = Map<string, boolean>;
-type StatsUpdaters = Map<string, NodeJS.Timeout>;
+
+interface PlayEvent {
+  playerId: string;
+  player: Record<string, string>;
+  streamData: Record<string, string>;
+}
 
 function getFile(torrent: WebTorrent.Torrent, fileId?: number): any[] {
   if (fileId !== undefined) {
@@ -26,33 +31,6 @@ function getFile(torrent: WebTorrent.Torrent, fileId?: number): any[] {
   return [responseFileId, responseFile];
 }
 
-function startStatsUpdates(
-  socket: socketio.Socket,
-  statsUpdaters: StatsUpdaters,
-  playerId: string,
-  torrent: WebTorrent.Torrent
-): void {
-  const response = getFile(torrent);
-  const file = response[1] as WebTorrent.TorrentFile | null;
-  const statsUpdater = setInterval(
-    (playerId, torrent) => {
-      socket.emit("stats", {
-        playerId,
-        uploadSpeed: torrent.uploadSpeed,
-        uploaded: torrent.uploaded,
-        downloadSpeed: torrent.downloadSpeed,
-        downloaded: (file && file.downloaded) || torrent.downloaded,
-        progress: (file && file.progress) || torrent.progress,
-        size: (file && file.length) || torrent.length,
-      });
-    },
-    1000,
-    playerId,
-    torrent
-  );
-  statsUpdaters.set(playerId, statsUpdater);
-}
-
 function sendVideoData(
   socket: socketio.Socket,
   playerId: string,
@@ -66,19 +44,16 @@ function sendVideoData(
   }
   const fileId = response[0] as number;
   const file = response[1] as WebTorrent.TorrentFile;
-  socket.emit("loaded", {
+  socket.emit(`loaded-${playerId}`, {
     playerId,
+    infoHash: torrent.infoHash,
     streamUri: `stream/${key}/${fileId}`,
     fileName: file.name,
     fileType: mime.getType(file.name) || "application/octet-stream",
   });
 }
 
-function onLoad(
-  socket: socketio.Socket,
-  activePlayers: ActivePlayers,
-  statsUpdaters: StatsUpdaters
-) {
+function onLoad(socket: socketio.Socket, activePlayers: ActivePlayers) {
   return (data: Record<string, any>): void => {
     const { playerId, torrentUrl } = data;
 
@@ -94,8 +69,7 @@ function onLoad(
       if (!torrent || !torrent.files.length) {
         torrent = torrentContainer.addTorrent(magnetUri);
         torrent.once("noPeers", (announceType) => {
-          // TODO: emit error
-          console.log(announceType);
+          // TODO: emit error :?
         });
         torrent.once("error", (error) => {
           // TODO: emit error
@@ -110,18 +84,11 @@ function onLoad(
           }
 
           sendVideoData(socket, playerId, torrent as WebTorrent.Torrent);
-          startStatsUpdates(
-            socket,
-            statsUpdaters,
-            playerId,
-            torrent as WebTorrent.Torrent
-          );
         });
         return;
       }
 
       sendVideoData(socket, playerId, torrent);
-      startStatsUpdates(socket, statsUpdaters, playerId, torrent);
     } catch (error) {
       console.error(error);
       // TODO: emit error
@@ -129,36 +96,87 @@ function onLoad(
   };
 }
 
-function onStop(activePlayers: ActivePlayers, statsUpdaters: StatsUpdaters) {
-  return (playerId: string): void => {
-    const statsUpdater = statsUpdaters.get(playerId);
-    if (statsUpdater) {
-      clearInterval(statsUpdater);
-      statsUpdaters.delete(playerId);
+function onStop(activePlayers: ActivePlayers) {
+  return async (data: Record<string, any>): Promise<void> => {
+    if (activePlayers.has(data.playerId)) {
+      activePlayers.delete(data.playerId);
     }
 
-    if (activePlayers.has(playerId)) {
-      activePlayers.delete(playerId);
+    const dlnaPlayer = findDlnaPlayer(data.player.ref);
+    if (dlnaPlayer && dlnaPlayer.client) {
+      await new Promise((resolve, reject) =>
+        dlnaPlayer.client.stop((err) => {
+          if (err) return reject();
+          resolve();
+        })
+      );
     }
   };
 }
 
 function onDisconnect(
   activePlayers: ActivePlayers,
-  statsUpdaters: StatsUpdaters
+  onDlnaListUpdateHandler: Function
 ) {
   return (): void => {
-    statsUpdaters.forEach(clearInterval);
-    statsUpdaters.clear();
     activePlayers.clear();
+    dlnaList.off("update", onDlnaListUpdateHandler);
+  };
+}
+
+function onDlnaListUpdate(socket: socketio.Socket) {
+  return (dlnaPlayer: Record<string, any>): void => {
+    if (socket.disconnected) {
+      return;
+    }
+
+    socket.emit("new-dlna-player", {
+      host: dlnaPlayer.host,
+      name: dlnaPlayer.name,
+    });
+  };
+}
+
+function onPlay(socket: socketio.Socket) {
+  return async (data: PlayEvent): Promise<void> => {
+    const player = findDlnaPlayer(data.player.ref);
+    if (!player) {
+      // TODO emit error
+      return;
+    }
+
+    const playerOptions = {
+      title: data.streamData.fileName,
+      type: data.streamData.fileType,
+      subtitles: [data.streamData.subUrl],
+      autoSubtitles: true,
+    };
+
+    player.play(data.streamData.streamUrl, playerOptions, (error, status) => {
+      if (error) {
+        // TODO emit error
+        return;
+      }
+      socket.emit(`playing-${data.playerId}`, { player: data.player, status });
+    });
   };
 }
 
 export function playerOnConnection(socket: socketio.Socket): void {
-  const statsUpdaters: StatsUpdaters = new Map();
   const activePlayers: ActivePlayers = new Map();
 
-  socket.on("load", onLoad(socket, activePlayers, statsUpdaters));
-  socket.on("stop", onStop(activePlayers, statsUpdaters));
-  socket.on("disconnect", onDisconnect(activePlayers, statsUpdaters));
+  socket.emit(
+    "dlna-players",
+    dlnaList.players.map((dlnaPlayer: Record<string, any>) => ({
+      host: dlnaPlayer.host,
+      name: dlnaPlayer.name,
+    }))
+  );
+  const onDlnaListUpdateHandler = onDlnaListUpdate(socket);
+  dlnaList.on("update", onDlnaListUpdateHandler);
+
+  socket.on("play", onPlay(socket));
+  socket.on("load", onLoad(socket, activePlayers));
+  socket.on("stop", onStop(activePlayers));
+  socket.on("disconnect", onDisconnect(activePlayers, onDlnaListUpdateHandler));
 }

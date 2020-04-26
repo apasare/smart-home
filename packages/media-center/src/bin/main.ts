@@ -5,13 +5,18 @@ import cors from "@koa/cors";
 import http from "http";
 import socketio from "socket.io";
 
-import { registerControllers, playerOnConnection } from "../service";
+import {
+  registerControllers,
+  playerOnConnection,
+  broadcastTorrentStats,
+} from "../service";
 import { Torrents, DownloadTorrentFile, Subtitles } from "../controller/stream";
 import { Movies, Animes, Shows } from "../controller/api";
 
 function bootstrapSocketio(server: http.Server): void {
   const io = socketio(server);
   io.of("/player").on("connection", playerOnConnection);
+  broadcastTorrentStats(io.of("/torrent"));
 }
 
 function bootstrapKoaApp(app: Koa): void {

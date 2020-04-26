@@ -41,3 +41,17 @@ export const genres: SelectOptions[] = [
   { label: "Western", value: "western" },
 ];
 export const defaultGenre = "all";
+
+export const defaultLang = "en";
+
+export function toReadable(bytes: number): string {
+  const labels = ["B", "KB", "MB", "GB"];
+  let readable = bytes;
+  let index = 0;
+  while (readable / 1024 > 0.01 && index < labels.length - 1) {
+    readable = readable / 1024;
+    index += 1;
+  }
+
+  return `${readable.toFixed(2)} ${labels[index]}`;
+}

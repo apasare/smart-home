@@ -9,12 +9,28 @@ import {
   globalStateReducer,
 } from "./context/GlobalContext";
 import { getAnimePosterUrl } from "./helper";
+import playerIo from "./service/playerIo";
 
 function App() {
   const [state, dispatch] = React.useReducer(
     globalStateReducer,
     initialGlobalState
   );
+  const onDlnaPlayers = React.useCallback((dlnaPlayers) => {
+    dispatch({ type: "dlna-players", payload: { players: dlnaPlayers } });
+  }, []);
+  const onNewDlnaPlayer = React.useCallback((dlnaPlayer) => {
+    dispatch({ type: "new-dlna-player", payload: { player: dlnaPlayer } });
+  }, []);
+
+  React.useEffect(() => {
+    playerIo.once("dlna-players", onDlnaPlayers);
+    playerIo.on("new-dlna-player", onNewDlnaPlayer);
+
+    return () => {
+      playerIo.off("new-dlna-player", onNewDlnaPlayer);
+    };
+  });
 
   return (
     <GlobalContext.Provider value={{ state, dispatch }}>

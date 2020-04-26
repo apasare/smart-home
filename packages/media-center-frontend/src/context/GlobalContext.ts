@@ -1,9 +1,12 @@
 import React from "react";
 
+export interface DlnaPlayer {
+  host: string;
+  name: string;
+}
+
 export interface GlobalState {
-  filters: {
-    keywords: string;
-  };
+  dlnaPlayers: Map<string, DlnaPlayer>;
 }
 
 export interface GlobalStateDispatchAction<T = Record<string, any>> {
@@ -12,9 +15,7 @@ export interface GlobalStateDispatchAction<T = Record<string, any>> {
 }
 
 export const initialGlobalState: GlobalState = {
-  filters: {
-    keywords: "",
-  },
+  dlnaPlayers: new Map(),
 };
 
 export function globalStateReducer(
@@ -22,12 +23,19 @@ export function globalStateReducer(
   action: GlobalStateDispatchAction
 ) {
   switch (action.type) {
-    case "search":
-      state.filters.keywords = action.payload.keywords;
-      return { ...state, filters: { ...state.filters } };
+    case "dlna-players":
+      state.dlnaPlayers.clear();
+      action.payload.players.forEach((player: DlnaPlayer) =>
+        state.dlnaPlayers.set(player.host, player)
+      );
+      return { ...state };
 
-    case "reset-filters":
-      return { ...state, filters: { ...initialGlobalState.filters } };
+    case "new-dlna-player":
+      if (state.dlnaPlayers.has(action.payload.player.name)) {
+        return state;
+      }
+      state.dlnaPlayers.set(action.payload.player.host, action.payload.player);
+      return { ...state };
 
     default:
       return state;

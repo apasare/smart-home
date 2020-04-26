@@ -1,4 +1,5 @@
 import socketio from "socket.io-client";
 import { API_HOST } from "../constants";
 
-export const playerIo = socketio(`${API_HOST}player`);
+const torrentIo = socketio(`${API_HOST}torrent`);
+export default torrentIo;

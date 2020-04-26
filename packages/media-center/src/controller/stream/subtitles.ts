@@ -32,7 +32,7 @@ export class Subtitles {
   @Get("/:torrentKey/:fileId")
   async listSubtitles(ctx: Koa.ParameterizedContext): Promise<void> {
     const { torrentKey, fileId } = ctx.params;
-    const { lang, imdbid, season, episode } = ctx.query;
+    const { lang, imdbid, season, episode, srt } = ctx.query;
     const streamTorrent = streamTorrentsRepository.get(torrentKey);
     if (!streamTorrent) {
       ctx.status = 404;
@@ -62,8 +62,15 @@ export class Subtitles {
       }
 
       ctx.set("Cache-Control", "max-age=600");
-      ctx.set("Content-Type", "text/vtt; charset=utf-8");
-      ctx.body = subtitleResponse.data.pipe(srt2vtt());
+
+      if (srt) {
+        ctx.set("Content-Type", "text/srt; charset=utf-8");
+        ctx.body = subtitleResponse.data;
+      } else {
+        ctx.set("Content-Type", "text/vtt; charset=utf-8");
+        ctx.body = subtitleResponse.data.pipe(srt2vtt());
+      }
+
       return;
     } else if (lang) {
       return;
