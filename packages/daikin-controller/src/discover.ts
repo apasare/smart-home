@@ -1,4 +1,4 @@
-import { createSocket, Socket } from "dgram";
+import { createSocket, Socket } from 'dgram';
 
 export interface IDiscoverOptions {
   listenPort: number;
@@ -6,7 +6,7 @@ export interface IDiscoverOptions {
   probePort: number;
   probeAddress: string;
   searchTime: number;
-  probeMessage: string | any[] | Buffer | Uint8Array;
+  probeMessage: string | Buffer | Uint8Array;
 }
 
 export interface IDaikinDevice {
@@ -14,12 +14,14 @@ export interface IDaikinDevice {
   basic_info: string | Buffer;
 }
 
-export function discover(options: Partial<IDiscoverOptions> = {}) {
+export function discover(
+  options: Partial<IDiscoverOptions> = {}
+): Promise<IDaikinDevice[]> {
   const discoverOptions: IDiscoverOptions = {
-    listenAddress: "0.0.0.0",
+    listenAddress: '0.0.0.0',
     listenPort: 30000,
-    probeAddress: "255.255.255.255",
-    probeMessage: Buffer.from("DAIKIN_UDP/common/basic_info"),
+    probeAddress: '255.255.255.255',
+    probeMessage: Buffer.from('DAIKIN_UDP/common/basic_info'),
     probePort: 30050,
     searchTime: 5000,
     ...options,
@@ -30,25 +32,29 @@ export function discover(options: Partial<IDiscoverOptions> = {}) {
   return new Promise<IDaikinDevice[]>((resolve, reject) => {
     const udpSocket: Socket = createSocket({
       reuseAddr: true,
-      type: "udp4",
+      type: 'udp4',
     });
 
-    udpSocket.on("error", (error) => {
+    udpSocket.on('error', (error) => {
       udpSocket.close();
       reject(error);
     });
 
-    udpSocket.on("message", (message, remote) => {
+    udpSocket.on('message', (message, remote) => {
       devices.push({
         address: remote.address,
         basic_info: message,
       });
     });
 
-    udpSocket.on("listening", () => {
-      udpSocket.addMembership("224.0.0.1");
+    udpSocket.on('listening', () => {
+      udpSocket.addMembership('224.0.0.1');
       udpSocket.setBroadcast(true);
-      udpSocket.send(discoverOptions.probeMessage, discoverOptions.probePort, discoverOptions.probeAddress);
+      udpSocket.send(
+        discoverOptions.probeMessage,
+        discoverOptions.probePort,
+        discoverOptions.probeAddress
+      );
 
       setTimeout(() => {
         udpSocket.close();

@@ -1,7 +1,7 @@
-import { Client } from "./api";
-import { discover } from "./discover";
+import { Client } from './api';
+import { discover } from './discover';
 
-export * from "./discover";
+export * from './discover';
 
 (async function test() {
   const devices = await discover({
@@ -10,5 +10,5 @@ export * from "./discover";
   });
 
   const ac = new Client(devices[0].address);
-  console.log(await (await ac.getBasicInfo()).get("type"));
+  console.log(await (await ac.getBasicInfo()).get('type'));
 })();

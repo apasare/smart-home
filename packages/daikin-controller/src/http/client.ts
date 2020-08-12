@@ -1,4 +1,4 @@
-import fetch, { Response } from "node-fetch";
+import fetch, { Response } from 'node-fetch';
 
 export class Client {
   protected baseAddress: string;
@@ -7,7 +7,7 @@ export class Client {
     this.baseAddress = baseAddress;
   }
 
-  protected fetch(endPoint: string, method: string = "GET"): Promise<Response> {
+  protected fetch(endPoint: string, method = 'GET'): Promise<Response> {
     return fetch(`http://${this.baseAddress}${endPoint}`, {
       method,
     });

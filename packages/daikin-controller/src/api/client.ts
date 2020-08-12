@@ -1,6 +1,6 @@
-import { Client as HttpClient } from "../http";
-import { IBasicInfo, IResponse, IResponseFactory } from "../interface";
-import { ResponseFactory } from "./response.factory";
+import { Client as HttpClient } from '../http';
+import { IBasicInfo, IResponse, IResponseFactory } from '../interface';
+import { ResponseFactory } from './response.factory';
 
 export class Client extends HttpClient {
   protected responseFactory: IResponseFactory;
@@ -11,7 +11,7 @@ export class Client extends HttpClient {
   }
 
   public async getBasicInfo(): Promise<IResponse<IBasicInfo>> {
-    const fetchResponse = await this.fetch("/common/basic_info");
+    const fetchResponse = await this.fetch('/common/basic_info');
     return this.responseFactory.create<IBasicInfo>(fetchResponse);
   }
 }

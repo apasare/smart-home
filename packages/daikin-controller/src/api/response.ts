@@ -1,6 +1,6 @@
-import { Response as FetchResponse } from "node-fetch";
+import { Response as FetchResponse } from 'node-fetch';
 
-import { IResponse } from "../interface";
+import { IResponse } from '../interface';
 
 export class Response<T> implements IResponse<T> {
   protected data: Map<string, string> = new Map<string, string>();
