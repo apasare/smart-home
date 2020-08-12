@@ -1,17 +1,23 @@
-import { Client as HttpClient } from '../http';
-import { IBasicInfo, IResponse, IResponseFactory } from '../interface';
-import { ResponseFactory } from './response.factory';
+import fetch, { Response as FetchResponse } from 'node-fetch';
 
-export class Client extends HttpClient {
-  protected responseFactory: IResponseFactory;
+import { IBasicInfo, IResponse } from '../interface';
+import { Response } from './response';
+
+export class Client {
+  protected baseAddress: string;
 
   constructor(baseAddress: string) {
-    super(baseAddress);
-    this.responseFactory = new ResponseFactory();
+    this.baseAddress = baseAddress;
+  }
+
+  protected fetch(endPoint: string, method = 'GET'): Promise<FetchResponse> {
+    return fetch(`http://${this.baseAddress}${endPoint}`, {
+      method,
+    });
   }
 
   public async getBasicInfo(): Promise<IResponse<IBasicInfo>> {
     const fetchResponse = await this.fetch('/common/basic_info');
-    return this.responseFactory.create<IBasicInfo>(fetchResponse);
+    return Response.fromBuffer(await fetchResponse.buffer());
   }
 }

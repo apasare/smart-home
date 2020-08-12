@@ -1,4 +1,6 @@
 import { createSocket, Socket } from 'dgram';
+import { IBasicInfo, IResponse } from './interface';
+import { Response } from './api';
 
 export interface IDiscoverOptions {
   listenPort: number;
@@ -11,7 +13,7 @@ export interface IDiscoverOptions {
 
 export interface IDaikinDevice {
   address: string;
-  basic_info: string | Buffer;
+  basic_info: IResponse<IBasicInfo>;
 }
 
 export function discover(
@@ -43,7 +45,7 @@ export function discover(
     udpSocket.on('message', (message, remote) => {
       devices.push({
         address: remote.address,
-        basic_info: message,
+        basic_info: Response.fromBuffer(message),
       });
     });
 
