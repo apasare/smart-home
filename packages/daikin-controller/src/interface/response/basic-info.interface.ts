@@ -1,4 +1,4 @@
-export interface IBasicInfo {
+export interface BasicInfo {
   type: string;
   reg: string;
   dst: string;

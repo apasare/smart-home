@@ -1,5 +1,5 @@
 import { createSocket, Socket } from 'dgram';
-import { IBasicInfo, IResponse } from './interface';
+import { BasicInfo, IResponse } from './interface';
 import { Response } from './api';
 
 export interface IDiscoverOptions {
@@ -13,7 +13,7 @@ export interface IDiscoverOptions {
 
 export interface IDaikinDevice {
   address: string;
-  basic_info: IResponse<IBasicInfo>;
+  basic_info: IResponse<BasicInfo>;
 }
 
 export function discover(

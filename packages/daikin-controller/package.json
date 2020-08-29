@@ -1,6 +1,6 @@
 {
   "name": "@godvsdeity/daikin-controller",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
@@ -10,7 +10,7 @@
     "prewatch": "yarn clean",
     "watch": "tsc -w",
     "lint": "eslint \"src/**/*.ts\"",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "devDependencies": {
     "@types/node": "^12.12.54",
