@@ -1,7 +1,7 @@
 export const INTENT_SYNC = 'action.devices.SYNC';
 export const INTENT_QUERY = 'action.devices.QUERY';
 export const INTENT_EXECUTE = 'action.devices.EXECUTE';
-export const INTENT_DISCONNECT = 'action.devices.DISCONNEC';
+export const INTENT_DISCONNECT = 'action.devices.DISCONNECT';
 
 export class IntentPayloadDevice {
   readonly id: string;
@@ -17,9 +17,12 @@ export class IntentCommandExecution {
   readonly params: Record<string, string | number | boolean>;
 }
 
-export class IntentPayloadCommands {
-  readonly devices: IntentPayloadDevices;
+export class IntentPayloadCommand extends IntentPayloadDevices {
   readonly execution: IntentCommandExecution[];
+}
+
+export class IntentPayloadCommands {
+  commands: IntentPayloadCommand[];
 }
 
 export class SyncIntent {
@@ -33,10 +36,10 @@ export class QueryIntent {
 
 export class ExecuteIntent {
   readonly intent: typeof INTENT_EXECUTE;
-  readonly payload: IntentPayloadCommands[];
+  readonly payload: IntentPayloadCommands;
 }
 
-export class IntentRequestDTO<T = SyncIntent | QueryIntent> {
+export class IntentRequestDTO<T = SyncIntent | QueryIntent | ExecuteIntent> {
   readonly requestId: string;
   readonly inputs: T[];
 }
@@ -94,6 +97,19 @@ export class QueryIntentResponseDevices<T = Record<string, unknown>> {
   [id: string]: QueryIntentResponseDevice & T;
 }
 
+export class ExecuteIntentStates {
+  online: boolean;
+  [id: string]: string | number | boolean;
+}
+
+export class ExecuteIntentResponseCommand {
+  readonly ids: string[];
+  readonly status: DeviceStatus;
+  readonly errorCode?: string;
+  readonly debugString?: string;
+  readonly states?: ExecuteIntentStates;
+}
+
 class IntentResponsePayload {
   readonly errorCode?: string;
   readonly debugString?: string;
@@ -107,11 +123,18 @@ export class SyncIntentResponsePayload extends IntentResponsePayload {
 export class QueryIntentResponsePayload<
   T = Record<string, unknown>
 > extends IntentResponsePayload {
-  readonly devices: QueryIntentResponseDevices<T>;
+  devices: QueryIntentResponseDevices<T>;
+}
+
+export class ExecuteIntentResponsePayload extends IntentResponsePayload {
+  readonly commands: ExecuteIntentResponseCommand[];
 }
 
 export class IntentResponseDTO<
-  T = SyncIntentResponsePayload | QueryIntentResponsePayload
+  T =
+    | SyncIntentResponsePayload
+    | QueryIntentResponsePayload
+    | ExecuteIntentResponsePayload
 > {
   readonly requestId: string;
   readonly payload: T;

@@ -1,6 +1,12 @@
 import fetch, { Response as FetchResponse } from 'node-fetch';
 
-import { BasicInfo, ControlInfo, IResponse, SensorInfo } from '../interface';
+import {
+  BasicInfo,
+  ControlInfo,
+  IResponse,
+  SensorInfo,
+  SetControlInfo,
+} from '../interface';
 import { Response } from './response';
 
 export class Client {
@@ -17,24 +23,33 @@ export class Client {
     this.baseAddress = baseAddress;
   }
 
-  protected fetch(endPoint: string, method = 'GET'): Promise<FetchResponse> {
+  protected request(endPoint: string, method = 'GET'): Promise<FetchResponse> {
     return fetch(`http://${this.baseAddress}${endPoint}`, {
       method,
     });
   }
 
   public async getBasicInfo(): Promise<IResponse<BasicInfo>> {
-    const fetchResponse = await this.fetch(Client.RESOURCE_BASIC_INFO);
+    const fetchResponse = await this.request(Client.RESOURCE_BASIC_INFO);
     return Response.fromBuffer(await fetchResponse.buffer());
   }
 
   public async getControlInfo(): Promise<IResponse<ControlInfo>> {
-    const fetchResponse = await this.fetch(Client.RESOURCE_CONTROL_INFO);
+    const fetchResponse = await this.request(Client.RESOURCE_CONTROL_INFO);
+    return Response.fromBuffer(await fetchResponse.buffer());
+  }
+
+  public async setControlInfo(
+    params: URLSearchParams
+  ): Promise<IResponse<SetControlInfo>> {
+    const fetchResponse = await this.request(
+      `${Client.RESOURCE_SET_CONTROL_INFO}?${params.toString()}`
+    );
     return Response.fromBuffer(await fetchResponse.buffer());
   }
 
   public async getSensorInfo(): Promise<IResponse<SensorInfo>> {
-    const fetchResponse = await this.fetch(Client.RESOURCE_SENSOR_INFO);
+    const fetchResponse = await this.request(Client.RESOURCE_SENSOR_INFO);
     return Response.fromBuffer(await fetchResponse.buffer());
   }
 }

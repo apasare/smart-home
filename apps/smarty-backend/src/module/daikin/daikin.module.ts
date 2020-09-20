@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { QueryIntentHandler, SyncIntentHandler } from './gaction';
+// import { QueryIntentHandler, SyncIntentHandler } from './gaction';
 
 @Module({
-  providers: [QueryIntentHandler, SyncIntentHandler],
+  // providers: [QueryIntentHandler, SyncIntentHandler],
 })
 export class DaikinModule {}

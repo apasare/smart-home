@@ -3,9 +3,13 @@ import { IResponse } from '../interface';
 export class Response<T> implements IResponse<T> {
   protected data: Map<string, string> = new Map();
 
-  public setData(data: Map<string, string>): this {
-    this.data = new Map([...data]);
+  public setData(data: [string, string][]): this {
+    this.data = new Map(data);
     return this;
+  }
+
+  public getData(): Map<string, string> {
+    return this.data;
   }
 
   public get(key: keyof T): string | undefined {
@@ -16,10 +20,10 @@ export class Response<T> implements IResponse<T> {
     const response = new Response();
 
     const responseString: string = bodyBuffer.toString();
-    const data = new Map<string, string>();
+    const data: [string, string][] = [];
     for (const item of responseString.split(',')) {
       const keyValue = item.split('=');
-      data.set(keyValue[0], keyValue[1]);
+      data.push([keyValue[0], keyValue[1]]);
     }
     response.setData(data);
 

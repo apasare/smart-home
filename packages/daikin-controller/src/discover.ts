@@ -16,7 +16,56 @@ export interface IDaikinDevice {
   basic_info: IResponse<BasicInfo>;
 }
 
-export function discover(
+export interface IUDPDiscoveredDevice {
+  address: string;
+  message: Buffer;
+}
+
+export function udpDiscover(
+  options: IDiscoverOptions
+): Promise<IUDPDiscoveredDevice[]> {
+  return new Promise((resolve, reject) => {
+    const devices: IUDPDiscoveredDevice[] = [];
+    const udpSocket: Socket = createSocket({
+      reuseAddr: true,
+      type: 'udp4',
+    });
+
+    udpSocket.on('error', (error) => {
+      udpSocket.close();
+      reject(error);
+    });
+
+    udpSocket.on('message', (message, remote) => {
+      devices.push({
+        message,
+        address: remote.address,
+      });
+    });
+
+    udpSocket.on('listening', () => {
+      udpSocket.addMembership('224.0.0.1');
+      udpSocket.setBroadcast(true);
+      udpSocket.send(
+        options.probeMessage,
+        options.probePort,
+        options.probeAddress
+      );
+
+      setTimeout(() => {
+        udpSocket.close();
+        resolve(devices);
+      }, options.searchTime);
+    });
+
+    udpSocket.bind({
+      address: options.listenAddress,
+      port: options.listenPort,
+    });
+  });
+}
+
+export async function discover(
   options: Partial<IDiscoverOptions> = {}
 ): Promise<IDaikinDevice[]> {
   const discoverOptions: IDiscoverOptions = {
@@ -30,43 +79,13 @@ export function discover(
   };
 
   const devices: IDaikinDevice[] = [];
-
-  return new Promise<IDaikinDevice[]>((resolve, reject) => {
-    const udpSocket: Socket = createSocket({
-      reuseAddr: true,
-      type: 'udp4',
+  const udpDevices = await udpDiscover(discoverOptions);
+  for (const udpDevice of udpDevices) {
+    devices.push({
+      address: udpDevice.address,
+      basic_info: Response.fromBuffer(udpDevice.message),
     });
+  }
 
-    udpSocket.on('error', (error) => {
-      udpSocket.close();
-      reject(error);
-    });
-
-    udpSocket.on('message', (message, remote) => {
-      devices.push({
-        address: remote.address,
-        basic_info: Response.fromBuffer(message),
-      });
-    });
-
-    udpSocket.on('listening', () => {
-      udpSocket.addMembership('224.0.0.1');
-      udpSocket.setBroadcast(true);
-      udpSocket.send(
-        discoverOptions.probeMessage,
-        discoverOptions.probePort,
-        discoverOptions.probeAddress
-      );
-
-      setTimeout(() => {
-        udpSocket.close();
-        resolve(devices);
-      }, discoverOptions.searchTime);
-    });
-
-    udpSocket.bind({
-      address: discoverOptions.listenAddress,
-      port: discoverOptions.listenPort,
-    });
-  });
+  return devices;
 }

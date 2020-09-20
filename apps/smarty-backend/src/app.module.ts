@@ -6,6 +6,7 @@ import { OAuthServerModule } from './module/oauth-server';
 import { GActionModule } from './module/gaction';
 import { DaikinModule } from './module/daikin';
 import { DatabaseModule } from './module/database';
+import { HomeModule } from './module/home';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { DatabaseModule } from './module/database';
     OAuthServerModule,
     GActionModule,
     DaikinModule,
+    HomeModule,
   ],
 })
 export class AppModule {}

@@ -35,4 +35,5 @@ export enum AIR_FLOW_DIRECTION {
 
 export interface IResponse<T = Record<string, unknown>> {
   get(key: keyof T): string | undefined;
+  getData(): Map<string, string>;
 }

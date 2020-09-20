@@ -16,3 +16,8 @@ export interface ControlInfo {
   f_dir: AIR_FLOW_DIRECTION;
   adv: string;
 }
+
+export interface SetControlInfo {
+  ret: RET;
+  adv?: string;
+}
