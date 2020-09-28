@@ -2,6 +2,7 @@ import { discover } from '@godvsdeity/daikin-controller';
 import { Controller, Get } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { Device } from '../entity';
 
 @Controller('home/devices')
@@ -27,7 +28,7 @@ export class DeviceController {
         (await this.deviceRepository.findOne({ physicalId })) || new Device();
 
       homeDevice.address = device.address;
-      homeDevice.controller = 'daikin-ac';
+      homeDevice.adapter = 'daikin-ac';
       homeDevice.name = decodeURI(device.basic_info.get('name'));
       homeDevice.physicalId = physicalId;
       homeDevice.additionalData = [...device.basic_info.getData()];

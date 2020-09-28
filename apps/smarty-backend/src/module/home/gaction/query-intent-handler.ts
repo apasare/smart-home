@@ -1,4 +1,3 @@
-import { Client as DaikinClient, POWER } from '@godvsdeity/daikin-controller';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -14,12 +13,14 @@ import {
   IntentHandler,
 } from '../../gaction';
 import { Device } from '../entity';
+import { DeviceAdaptersRegister } from '../service';
 
 @IntentHandler()
 export class QueryIntentHandler implements IntentHandlerInterface {
   constructor(
     @InjectRepository(Device)
     private readonly deviceRepository: Repository<Device>,
+    private readonly deviceAdaptersRegister: DeviceAdaptersRegister,
   ) {}
 
   public canHandle(intentRequest: IntentRequestDTO): boolean {
@@ -35,25 +36,11 @@ export class QueryIntentHandler implements IntentHandlerInterface {
     for (const device of intentRequest.inputs[0].payload.devices) {
       try {
         const homeDevice = await this.deviceRepository.findOneOrFail(device.id);
+        const deviceAdapter = await this.deviceAdaptersRegister.getAdapter(
+          homeDevice,
+        );
 
-        // @TODO implement homeDevice.controller
-        const daikinClient = new DaikinClient(homeDevice.address);
-        const controlInfo = await daikinClient.getControlInfo();
-        const sensorInfo = await daikinClient.getSensorInfo();
-
-        const payloadDevice = {
-          status: DeviceStatus.SUCCESS,
-          online: true,
-          on: controlInfo.get('pow') === POWER.ON,
-          currentFanSpeedSetting: controlInfo.get('f_rate'),
-          // @TODO change based on controlInfo.get('mode')
-          thermostatMode: 'cool',
-          thermostatTemperatureSetpoint: controlInfo.get('stemp'),
-          thermostatTemperatureAmbient: sensorInfo.get('htemp'),
-          thermostatHumidityAmbient: sensorInfo.get('hhum'),
-        };
-
-        devices[device.id] = payloadDevice;
+        devices[device.id] = await deviceAdapter.onQuery(device);
       } catch (error) {
         devices[device.id] = {
           status: DeviceStatus.OFFLINE,

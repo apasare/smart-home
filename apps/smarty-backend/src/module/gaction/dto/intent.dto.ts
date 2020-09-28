@@ -1,7 +1,11 @@
+// intents
 export const INTENT_SYNC = 'action.devices.SYNC';
 export const INTENT_QUERY = 'action.devices.QUERY';
 export const INTENT_EXECUTE = 'action.devices.EXECUTE';
 export const INTENT_DISCONNECT = 'action.devices.DISCONNECT';
+
+// commands
+export const COMMAND_ONOFF = 'action.devices.commands.OnOff';
 
 export class IntentPayloadDevice {
   readonly id: string;
@@ -93,7 +97,7 @@ export class QueryIntentResponseDevice {
   readonly debugString?: string;
 }
 
-export class QueryIntentResponseDevices<T = Record<string, unknown>> {
+export class QueryIntentResponseDevices<T = Record<string, string | number | boolean>> {
   [id: string]: QueryIntentResponseDevice & T;
 }
 

@@ -13,7 +13,7 @@ export class Device {
   name: string;
 
   @Column()
-  controller: string;
+  adapter: string;
 
   @Column()
   address: string;

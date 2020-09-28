@@ -1,11 +1,9 @@
 import { Module, OnApplicationBootstrap } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
 
 import { GActionController } from './controller';
 import { ActionManagerService, ExplorerService } from './service';
 
 @Module({
-  imports: [CqrsModule],
   controllers: [GActionController],
   providers: [ActionManagerService, ExplorerService],
 })
