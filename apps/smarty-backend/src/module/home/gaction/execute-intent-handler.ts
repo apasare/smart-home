@@ -1,17 +1,16 @@
-import { Client as DaikinClient, RET } from '@apasare/daikin-controller';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { IntentHandlerInterface } from '../../gaction/interface';
 import {
-  INTENT_EXECUTE,
   IntentRequestDTO,
   IntentResponseDTO,
   IntentHandler,
   ExecuteIntentResponsePayload,
-  ExecuteIntent,
   ExecuteIntentResponseCommand,
   DeviceStatus,
+  ExecuteIntentDTO,
+  isExecuteIntentDTO,
 } from '../../gaction';
 import { Device } from '../entity';
 import { DeviceAdaptersRegister } from '../service';
@@ -29,14 +28,11 @@ export class ExecuteIntentHandler implements IntentHandlerInterface {
   }
 
   public canHandle(intentRequest: IntentRequestDTO): boolean {
-    return (
-      intentRequest.inputs[0] &&
-      intentRequest.inputs[0].intent === INTENT_EXECUTE
-    );
+    return intentRequest.inputs[0] && isExecuteIntentDTO(intentRequest.inputs[0]);
   }
 
   public async handle(
-    intentRequest: IntentRequestDTO<ExecuteIntent>,
+    intentRequest: IntentRequestDTO<ExecuteIntentDTO>,
   ): Promise<IntentResponseDTO<ExecuteIntentResponsePayload>> {
     const commandsResult: ExecuteIntentResponseCommand[] = [];
     for (const command of intentRequest.inputs[0].payload.commands) {

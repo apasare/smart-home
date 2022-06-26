@@ -1,8 +1,12 @@
+import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
+
 // intents
-export const INTENT_SYNC = 'action.devices.SYNC';
-export const INTENT_QUERY = 'action.devices.QUERY';
-export const INTENT_EXECUTE = 'action.devices.EXECUTE';
-export const INTENT_DISCONNECT = 'action.devices.DISCONNECT';
+export enum Intent {
+  SYNC = 'action.devices.SYNC',
+  QUERY = 'action.devices.QUERY',
+  EXECUTE = 'action.devices.EXECUTE',
+  DISCONNECT = 'action.devices.DISCONNECT',
+}
 
 // commands
 export const COMMAND_ONOFF = 'action.devices.commands.OnOff';
@@ -30,22 +34,55 @@ export class IntentPayloadCommands {
   commands: IntentPayloadCommand[];
 }
 
-export class SyncIntent {
-  readonly intent: typeof INTENT_SYNC;
+export interface IntentDTO {
+  readonly intent: Intent;
 }
 
-export class QueryIntent {
-  readonly intent: typeof INTENT_QUERY;
+export class SyncIntentDTO implements IntentDTO {
+  @ApiProperty({ type: Intent.SYNC, default: Intent.SYNC })
+  readonly intent: typeof Intent.SYNC;
+}
+
+export function isSyncIntentDTO(intent: IntentDTO): intent is SyncIntentDTO {
+  return intent.intent === Intent.SYNC;
+}
+
+export class QueryIntentDTO implements IntentDTO {
+  @ApiProperty({ type: Intent.QUERY, default: Intent.QUERY })
+  readonly intent: typeof Intent.QUERY;
   readonly payload: IntentPayloadDevices;
 }
 
-export class ExecuteIntent {
-  readonly intent: typeof INTENT_EXECUTE;
+export function isQueryIntentDTO(intent: IntentDTO): intent is QueryIntentDTO {
+  return intent.intent === Intent.QUERY;
+}
+
+export class ExecuteIntentDTO implements IntentDTO {
+  @ApiProperty({ type: Intent.EXECUTE, default: Intent.EXECUTE })
+  readonly intent: typeof Intent.EXECUTE;
   readonly payload: IntentPayloadCommands;
 }
 
-export class IntentRequestDTO<T = SyncIntent | QueryIntent | ExecuteIntent> {
+export function isExecuteIntentDTO(
+  intent: IntentDTO,
+): intent is ExecuteIntentDTO {
+  return intent.intent === Intent.EXECUTE;
+}
+
+@ApiExtraModels(SyncIntentDTO, QueryIntentDTO, ExecuteIntentDTO)
+export class IntentRequestDTO<T extends IntentDTO = IntentDTO> {
   readonly requestId: string;
+
+  @ApiProperty({
+    type: 'array',
+    items: {
+      oneOf: [
+        { $ref: getSchemaPath(SyncIntentDTO) },
+        { $ref: getSchemaPath(QueryIntentDTO) },
+        { $ref: getSchemaPath(ExecuteIntentDTO) },
+      ],
+    },
+  })
   readonly inputs: T[];
 }
 
@@ -98,10 +135,9 @@ export class QueryIntentResponseDevice {
   readonly debugString?: string;
 }
 
-export class QueryIntentResponseDevices<
-  T = Record<string, string | number | boolean>,
-> {
-  [id: string]: QueryIntentResponseDevice & T;
+export class QueryIntentResponseDevices {
+  [id: string]: QueryIntentResponseDevice &
+    Record<string, string | number | boolean>;
 }
 
 export class ExecuteIntentStates {
@@ -127,22 +163,30 @@ export class SyncIntentResponsePayload extends IntentResponsePayload {
   readonly devices: SyncIntentResponseDevice[];
 }
 
-export class QueryIntentResponsePayload<
-  T = Record<string, unknown>,
-> extends IntentResponsePayload {
-  devices: QueryIntentResponseDevices<T>;
+export class QueryIntentResponsePayload extends IntentResponsePayload {
+  devices: QueryIntentResponseDevices;
 }
 
 export class ExecuteIntentResponsePayload extends IntentResponsePayload {
   readonly commands: ExecuteIntentResponseCommand[];
 }
 
+@ApiExtraModels(
+  SyncIntentResponsePayload,
+  QueryIntentResponsePayload,
+  ExecuteIntentResponsePayload,
+)
 export class IntentResponseDTO<
-  T =
-    | SyncIntentResponsePayload
-    | QueryIntentResponsePayload
-    | ExecuteIntentResponsePayload,
+  T extends IntentResponsePayload = IntentResponsePayload,
 > {
   readonly requestId: string;
+
+  @ApiProperty({
+    oneOf: [
+      { $ref: getSchemaPath(SyncIntentResponsePayload) },
+      { $ref: getSchemaPath(QueryIntentResponsePayload) },
+      { $ref: getSchemaPath(ExecuteIntentResponsePayload) },
+    ],
+  })
   readonly payload: T;
 }

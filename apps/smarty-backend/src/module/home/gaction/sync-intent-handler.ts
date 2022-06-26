@@ -3,12 +3,12 @@ import { Repository } from 'typeorm';
 
 import { IntentHandlerInterface } from '../../gaction/interface';
 import {
-  INTENT_SYNC,
   IntentRequestDTO,
-  SyncIntent,
+  SyncIntentDTO,
   IntentResponseDTO,
   SyncIntentResponsePayload,
   IntentHandler,
+  isSyncIntentDTO,
 } from '../../gaction';
 import { Device } from '../entity';
 import { DeviceAdaptersRegister } from '../service';
@@ -22,13 +22,11 @@ export class SyncIntentHandler implements IntentHandlerInterface {
   ) {}
 
   public canHandle(intentRequest: IntentRequestDTO): boolean {
-    return (
-      intentRequest.inputs[0] && intentRequest.inputs[0].intent === INTENT_SYNC
-    );
+    return intentRequest.inputs[0] && isSyncIntentDTO(intentRequest.inputs[0]);
   }
 
   public async handle(
-    intentRequest: IntentRequestDTO<SyncIntent>,
+    intentRequest: IntentRequestDTO<SyncIntentDTO>,
   ): Promise<IntentResponseDTO<SyncIntentResponsePayload>> {
     const homeDevices = await this.deviceRepository.find();
 
@@ -37,7 +35,7 @@ export class SyncIntentHandler implements IntentHandlerInterface {
       payload: {
         agentUserId: 'FAKE_USER_ID',
         devices: await Promise.all(
-          homeDevices.map(async device => {
+          homeDevices.map(async (device) => {
             const deviceAdapter = await this.deviceAdaptersRegister.getAdapter(
               device,
             );

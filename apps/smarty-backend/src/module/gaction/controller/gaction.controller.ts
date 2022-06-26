@@ -1,4 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
+import { ApiOkResponse } from '@nestjs/swagger';
 
 import { LoggerService } from '../../logger';
 import { IntentRequestDTO, IntentResponseDTO } from '../dto';
@@ -7,13 +8,16 @@ import { ActionManagerService } from '../service';
 @Controller('gaction')
 export class GActionController {
   public constructor(
-    private actionManager: ActionManagerService,
+    private readonly actionManager: ActionManagerService,
     private readonly logger: LoggerService,
   ) {
-    this.logger.setContext(GActionController.name)
+    this.logger.setContext(GActionController.name);
   }
 
   @Post('intent')
+  @ApiOkResponse({
+    type: IntentResponseDTO,
+  })
   public async postIntent(
     @Body() intentRequest: IntentRequestDTO,
   ): Promise<IntentResponseDTO> {

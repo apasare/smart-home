@@ -3,14 +3,14 @@ import { Repository } from 'typeorm';
 
 import { IntentHandlerInterface } from '../../gaction/interface';
 import {
-  INTENT_QUERY,
   IntentRequestDTO,
   IntentResponseDTO,
   QueryIntentResponsePayload,
-  QueryIntent,
+  QueryIntentDTO,
   QueryIntentResponseDevices,
   DeviceStatus,
   IntentHandler,
+  isQueryIntentDTO,
 } from '../../gaction';
 import { Device } from '../entity';
 import { DeviceAdaptersRegister } from '../service';
@@ -24,13 +24,11 @@ export class QueryIntentHandler implements IntentHandlerInterface {
   ) {}
 
   public canHandle(intentRequest: IntentRequestDTO): boolean {
-    return (
-      intentRequest.inputs[0] && intentRequest.inputs[0].intent === INTENT_QUERY
-    );
+    return intentRequest.inputs[0] && isQueryIntentDTO(intentRequest.inputs[0]);
   }
 
   public async handle(
-    intentRequest: IntentRequestDTO<QueryIntent>,
+    intentRequest: IntentRequestDTO<QueryIntentDTO>,
   ): Promise<IntentResponseDTO<QueryIntentResponsePayload>> {
     const devices: QueryIntentResponseDevices = {};
     for (const device of intentRequest.inputs[0].payload.devices) {
