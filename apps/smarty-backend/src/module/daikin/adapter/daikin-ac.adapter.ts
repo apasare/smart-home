@@ -2,13 +2,10 @@ import { Inject } from '@nestjs/common';
 
 import {
   Client as DaikinClient,
-  BasicInfo,
   FAN_SPEED,
   POWER,
-  Response,
   IResponse,
   ControlInfo,
-  MODE,
 } from '@apasare/daikin-controller';
 
 import {
@@ -22,6 +19,7 @@ import {
 } from '../../gaction';
 import { Device, DeviceAdapter, DeviceAdapterInterface } from '../../home';
 import { DAIKIN_GACTION_COMMANDS_TOKEN, GActionCommands } from '../providers';
+import { getGActionThermostatMode } from '../utils';
 
 @DeviceAdapter('daikin-ac')
 export class DaikinACAdapter implements DeviceAdapterInterface {
@@ -38,8 +36,8 @@ export class DaikinACAdapter implements DeviceAdapterInterface {
   }
 
   async onSync(): Promise<SyncIntentResponseDevice> {
-    const basicInfo = new Response<BasicInfo>();
-    basicInfo.setData(<[string, string][]>this.device.additionalData);
+    const daikinClient = new DaikinClient(this.device.address);
+    const basicInfo = await daikinClient.getBasicInfo();
 
     return {
       id: this.device.id,
@@ -129,8 +127,8 @@ export class DaikinACAdapter implements DeviceAdapterInterface {
         },
         thermostatTemperatureUnit: 'C',
         availableThermostatModes: [
-          // ThermostatMode.OFF,
-          // ThermostatMode.ON,
+          ThermostatMode.OFF,
+          ThermostatMode.ON,
           ThermostatMode.AUTO,
           ThermostatMode.COOL,
           ThermostatMode.HEAT,
@@ -146,31 +144,14 @@ export class DaikinACAdapter implements DeviceAdapterInterface {
     };
   }
 
-  protected getThermostatMode(controlInfo: IResponse<ControlInfo>): string {
-    switch (controlInfo.get('mode')) {
-      case MODE.AUTO:
-        return ThermostatMode.AUTO;
-      case MODE.COOL:
-        return ThermostatMode.COOL;
-      case MODE.HEAT:
-        return ThermostatMode.HEAT;
-      case MODE.DRY:
-        return ThermostatMode.DRY;
-      case MODE.FAN:
-        return ThermostatMode.FAN_ONLY;
-      default:
-        return ThermostatMode.NONE;
-    }
-  }
-
   protected getActiveThermostatMode(
     controlInfo: IResponse<ControlInfo>,
-  ): string {
+  ): ThermostatMode {
     if (controlInfo.get('pow') === POWER.OFF) {
       return ThermostatMode.OFF;
     }
 
-    return this.getThermostatMode(controlInfo);
+    return getGActionThermostatMode(controlInfo.get('mode'));
   }
 
   async onQuery(

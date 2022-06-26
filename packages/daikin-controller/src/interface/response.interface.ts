@@ -33,7 +33,7 @@ export enum AIR_FLOW_DIRECTION {
   THREED = '3',
 }
 
-export interface IResponse<T = Record<string, unknown>> {
-  get(key: keyof T): string | undefined;
-  getData(): Map<string, string>;
+export interface IResponse<T> {
+  get<K extends keyof T>(key: K): T[K] | undefined;
+  getData(): Map<keyof T, T[keyof T]>;
 }

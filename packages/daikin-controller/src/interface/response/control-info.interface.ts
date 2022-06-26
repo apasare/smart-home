@@ -10,8 +10,8 @@ export interface ControlInfo {
   ret: RET;
   pow: POWER;
   mode: MODE;
-  stemp: string | number;
-  shum: string | number;
+  stemp: string;
+  shum: string;
   f_rate: FAN_SPEED;
   f_dir: AIR_FLOW_DIRECTION;
   adv: string;
