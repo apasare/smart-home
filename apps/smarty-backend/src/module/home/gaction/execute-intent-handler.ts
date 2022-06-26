@@ -1,4 +1,4 @@
-import { Client as DaikinClient, RET } from '@godvsdeity/daikin-controller';
+import { Client as DaikinClient, RET } from '@apasare/daikin-controller';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -15,6 +15,7 @@ import {
 } from '../../gaction';
 import { Device } from '../entity';
 import { DeviceAdaptersRegister } from '../service';
+import { LoggerService } from '../../logger';
 
 @IntentHandler()
 export class ExecuteIntentHandler implements IntentHandlerInterface {
@@ -22,7 +23,10 @@ export class ExecuteIntentHandler implements IntentHandlerInterface {
     @InjectRepository(Device)
     private readonly deviceRepository: Repository<Device>,
     private readonly deviceAdaptersRegister: DeviceAdaptersRegister,
-  ) {}
+    private readonly logger: LoggerService,
+  ) {
+    this.logger.setContext(ExecuteIntentHandler.name);
+  }
 
   public canHandle(intentRequest: IntentRequestDTO): boolean {
     return (
@@ -39,14 +43,15 @@ export class ExecuteIntentHandler implements IntentHandlerInterface {
       for (const execution of command.execution) {
         for (const device of command.devices) {
           try {
-            const homeDevice = await this.deviceRepository.findOneOrFail(
-              device.id,
-            );
+            const homeDevice = await this.deviceRepository.findOneByOrFail({
+              id: device.id,
+            });
             const deviceAdapter = await this.deviceAdaptersRegister.getAdapter(
               homeDevice,
             );
             commandsResult.push(await deviceAdapter.onExecute(execution));
           } catch (error) {
+            this.logger.error(error);
             commandsResult.push({
               ids: [device.id],
               status: DeviceStatus.ERROR,

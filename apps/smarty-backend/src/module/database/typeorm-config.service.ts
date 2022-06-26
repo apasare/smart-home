@@ -31,13 +31,13 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       password: this.dbConfig.password,
       database: this.dbConfig.database,
       synchronize: this.dbConfig.synchronize,
-      dropSchema: this.dbConfig.dropSchema,
       logging: false,
       autoLoadEntities: true,
-      migrationsRun: this.dbConfig.migrationsRun,
-      migrations: this.dbConfig.migrations,
-      subscribers: this.dbConfig.subscribers,
-      entities: this.dbConfig.entities,
+      // dropSchema: this.dbConfig.dropSchema,
+      // migrationsRun: this.dbConfig.migrationsRun,
+      // migrations: this.dbConfig.migrations,
+      // subscribers: this.dbConfig.subscribers,
+      // entities: this.dbConfig.entities,
     };
   }
 }

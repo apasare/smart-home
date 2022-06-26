@@ -1,10 +1,17 @@
 import { Module } from '@nestjs/common';
 
+import { LoggerModule } from '../logger';
 import { DaikinACAdapter } from './adapter';
-import { OnOffCommand } from './gaction';
+import { OnOffCommand, ThermostatSetModeCommand } from './gaction';
 import { commandsProvider } from './providers';
 
 @Module({
-  providers: [DaikinACAdapter, commandsProvider, OnOffCommand],
+  imports: [LoggerModule],
+  providers: [
+    OnOffCommand,
+    ThermostatSetModeCommand,
+    commandsProvider,
+    DaikinACAdapter,
+  ],
 })
 export class DaikinModule {}

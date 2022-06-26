@@ -1,5 +1,6 @@
-import { Client as DaikinClient, RET } from '@godvsdeity/daikin-controller';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+
+import { Client as DaikinClient, RET } from '@apasare/daikin-controller';
 
 import {
   COMMAND_ONOFF,
@@ -8,11 +9,13 @@ import {
   GActionCommandInterface,
 } from '../../../gaction';
 import { Device } from '../../../home';
+import { LoggerService } from '../../../logger';
 
 @Injectable()
 export class OnOffCommand implements GActionCommandInterface {
-  // TODO: refactor this, make it injectable
-  private readonly logger: Logger = new Logger(OnOffCommand.name);
+  constructor(private readonly logger: LoggerService) {
+    this.logger.setContext(OnOffCommand.name);
+  }
 
   public getName(): string {
     return COMMAND_ONOFF;

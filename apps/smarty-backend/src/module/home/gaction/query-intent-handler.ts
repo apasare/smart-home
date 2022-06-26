@@ -35,7 +35,9 @@ export class QueryIntentHandler implements IntentHandlerInterface {
     const devices: QueryIntentResponseDevices = {};
     for (const device of intentRequest.inputs[0].payload.devices) {
       try {
-        const homeDevice = await this.deviceRepository.findOneOrFail(device.id);
+        const homeDevice = await this.deviceRepository.findOneByOrFail({
+          id: device.id,
+        });
         const deviceAdapter = await this.deviceAdaptersRegister.getAdapter(
           homeDevice,
         );

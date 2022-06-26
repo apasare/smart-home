@@ -1,11 +1,15 @@
+import { Inject } from '@nestjs/common';
+
 import {
   Client as DaikinClient,
   BasicInfo,
   FAN_SPEED,
   POWER,
   Response,
-} from '@godvsdeity/daikin-controller';
-import { Inject } from '@nestjs/common';
+  IResponse,
+  ControlInfo,
+  MODE,
+} from '@apasare/daikin-controller';
 
 import {
   DeviceStatus,
@@ -14,6 +18,7 @@ import {
   IntentPayloadDevice,
   QueryIntentResponseDevice,
   SyncIntentResponseDevice,
+  ThermostatMode,
 } from '../../gaction';
 import { Device, DeviceAdapter, DeviceAdapterInterface } from '../../home';
 import { DAIKIN_GACTION_COMMANDS_TOKEN, GActionCommands } from '../providers';
@@ -123,8 +128,15 @@ export class DaikinACAdapter implements DeviceAdapterInterface {
           ordered: true,
         },
         thermostatTemperatureUnit: 'C',
-        availableThermostatModes:
-          'cool,heat,heatcool,fan-only,purifier,eco,dry',
+        availableThermostatModes: [
+          // ThermostatMode.OFF,
+          // ThermostatMode.ON,
+          ThermostatMode.AUTO,
+          ThermostatMode.COOL,
+          ThermostatMode.HEAT,
+          ThermostatMode.FAN_ONLY,
+          ThermostatMode.DRY,
+        ],
         thermostatTemperatureRange: {
           minThresholdCelsius: 18,
           maxThresholdCelsius: 30,
@@ -132,6 +144,33 @@ export class DaikinACAdapter implements DeviceAdapterInterface {
       },
       customData: {},
     };
+  }
+
+  protected getThermostatMode(controlInfo: IResponse<ControlInfo>): string {
+    switch (controlInfo.get('mode')) {
+      case MODE.AUTO:
+        return ThermostatMode.AUTO;
+      case MODE.COOL:
+        return ThermostatMode.COOL;
+      case MODE.HEAT:
+        return ThermostatMode.HEAT;
+      case MODE.DRY:
+        return ThermostatMode.DRY;
+      case MODE.FAN:
+        return ThermostatMode.FAN_ONLY;
+      default:
+        return ThermostatMode.NONE;
+    }
+  }
+
+  protected getActiveThermostatMode(
+    controlInfo: IResponse<ControlInfo>,
+  ): string {
+    if (controlInfo.get('pow') === POWER.OFF) {
+      return ThermostatMode.OFF;
+    }
+
+    return this.getThermostatMode(controlInfo);
   }
 
   async onQuery(
@@ -146,13 +185,15 @@ export class DaikinACAdapter implements DeviceAdapterInterface {
     return {
       status: DeviceStatus.SUCCESS,
       online: true,
+      // OnOff
       on: controlInfo.get('pow') === POWER.ON,
+      // FanSpeed
       currentFanSpeedSetting: controlInfo.get('f_rate'),
-      // @TODO change based on controlInfo.get('mode')
-      thermostatMode: 'cool',
-      thermostatTemperatureSetpoint: controlInfo.get('stemp'),
-      thermostatTemperatureAmbient: sensorInfo.get('htemp'),
-      thermostatHumidityAmbient: sensorInfo.get('hhum'),
+      // TemperatureSetting
+      thermostatMode: this.getActiveThermostatMode(controlInfo),
+      thermostatTemperatureSetpoint: parseFloat(controlInfo.get('stemp')),
+      thermostatTemperatureAmbient: parseFloat(sensorInfo.get('htemp')),
+      thermostatHumidityAmbient: parseFloat(sensorInfo.get('hhum')),
     };
   }
 

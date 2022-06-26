@@ -3,7 +3,7 @@ import { discover } from './discover';
 
 (async function test() {
   const devices = await discover({
-    // probeMessage: "wtf",
+    // probeMessage: "lorem ipsum",
     // probePort: 30000,
   });
 

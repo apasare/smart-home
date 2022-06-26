@@ -15,7 +15,7 @@
     "esModuleInterop": true,
     "baseUrl": "./packages",
     "paths": {
-      "@godvsdeity/*": [
+      "@apasare/*": [
         "./*/src"
       ]
     }

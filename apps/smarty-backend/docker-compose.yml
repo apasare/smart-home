@@ -12,17 +12,5 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: pgadmin@localhost
-      PGADMIN_DEFAULT_PASSWORD: pgadmin
-    volumes:
-      - pgadmindata:/root/.pgadmin
-    ports:
-      - 5050:80
-    restart: unless-stopped
-
 volumes:
   pgdata:
-  pgadmindata:

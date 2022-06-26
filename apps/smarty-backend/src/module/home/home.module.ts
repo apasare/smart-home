@@ -1,5 +1,6 @@
 import { Module, OnApplicationBootstrap } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerModule } from '../logger';
 
 import { DeviceController } from './controller';
 import { Device } from './entity';
@@ -8,7 +9,7 @@ import { ExecuteIntentHandler } from './gaction/execute-intent-handler';
 import { ExplorerService, DeviceAdaptersRegister } from './service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Device])],
+  imports: [LoggerModule, TypeOrmModule.forFeature([Device])],
   providers: [
     ExplorerService,
     DeviceAdaptersRegister,

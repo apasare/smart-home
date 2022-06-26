@@ -6,6 +6,7 @@ export const INTENT_DISCONNECT = 'action.devices.DISCONNECT';
 
 // commands
 export const COMMAND_ONOFF = 'action.devices.commands.OnOff';
+export const THERMOSTAT_SET_MODE = 'action.devices.commands.ThermostatSetMode';
 
 export class IntentPayloadDevice {
   readonly id: string;
@@ -97,7 +98,9 @@ export class QueryIntentResponseDevice {
   readonly debugString?: string;
 }
 
-export class QueryIntentResponseDevices<T = Record<string, string | number | boolean>> {
+export class QueryIntentResponseDevices<
+  T = Record<string, string | number | boolean>,
+> {
   [id: string]: QueryIntentResponseDevice & T;
 }
 
@@ -125,7 +128,7 @@ export class SyncIntentResponsePayload extends IntentResponsePayload {
 }
 
 export class QueryIntentResponsePayload<
-  T = Record<string, unknown>
+  T = Record<string, unknown>,
 > extends IntentResponsePayload {
   devices: QueryIntentResponseDevices<T>;
 }
@@ -138,7 +141,7 @@ export class IntentResponseDTO<
   T =
     | SyncIntentResponsePayload
     | QueryIntentResponsePayload
-    | ExecuteIntentResponsePayload
+    | ExecuteIntentResponsePayload,
 > {
   readonly requestId: string;
   readonly payload: T;

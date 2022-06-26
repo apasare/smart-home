@@ -1,9 +1,11 @@
 import { Module, OnApplicationBootstrap } from '@nestjs/common';
 
+import { LoggerModule } from '../logger';
 import { GActionController } from './controller';
 import { ActionManagerService, ExplorerService } from './service';
 
 @Module({
+  imports: [LoggerModule],
   controllers: [GActionController],
   providers: [ActionManagerService, ExplorerService],
 })

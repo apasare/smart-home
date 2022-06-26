@@ -1,4 +1,4 @@
-import { discover } from '@godvsdeity/daikin-controller';
+import { discover } from '@apasare/daikin-controller';
 import { Controller, Get } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -25,7 +25,7 @@ export class DeviceController {
     for (const device of devices) {
       const physicalId = device.basic_info.get('mac');
       const homeDevice =
-        (await this.deviceRepository.findOne({ physicalId })) || new Device();
+        (await this.deviceRepository.findOneBy({ physicalId })) || new Device();
 
       homeDevice.address = device.address;
       homeDevice.adapter = 'daikin-ac';

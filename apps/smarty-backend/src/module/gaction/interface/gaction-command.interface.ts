@@ -6,6 +6,6 @@ export interface GActionCommandInterface {
 
   execute(
     homeDevice: Device,
-    commandParams: Record<string, string | number | boolean>,
+    commandParams: unknown,
   ): Promise<ExecuteIntentResponseCommand>;
 }
