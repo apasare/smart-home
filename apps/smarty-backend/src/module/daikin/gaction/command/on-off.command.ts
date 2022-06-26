@@ -11,6 +11,10 @@ import {
 import { Device } from '../../../home';
 import { LoggerService } from '../../../logger';
 
+interface CommandParams {
+  on: boolean;
+}
+
 @Injectable()
 export class OnOffCommand implements GActionCommandInterface {
   constructor(private readonly logger: LoggerService) {
@@ -23,7 +27,7 @@ export class OnOffCommand implements GActionCommandInterface {
 
   public async execute(
     homeDevice: Device,
-    commandParams: Record<string, string | number | boolean>,
+    commandParams: CommandParams,
   ): Promise<ExecuteIntentResponseCommand> {
     try {
       const daikinClient = new DaikinClient(homeDevice.address);

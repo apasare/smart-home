@@ -16,6 +16,11 @@ import {
 } from '../../../gaction';
 import { Device } from '../../../home';
 import { LoggerService } from '../../../logger';
+import { getDeviceThermostatMode } from '../../utils';
+
+interface CommandParams {
+  thermostatMode: ThermostatMode;
+}
 
 @Injectable()
 export class ThermostatSetModeCommand implements GActionCommandInterface {
@@ -27,32 +32,9 @@ export class ThermostatSetModeCommand implements GActionCommandInterface {
     return THERMOSTAT_SET_MODE;
   }
 
-  protected getThermostatMode(gactionThermostatMode: string): string {
-    switch (gactionThermostatMode) {
-      case ThermostatMode.ON:
-        return POWER.ON;
-      case ThermostatMode.OFF:
-        return POWER.OFF;
-      case ThermostatMode.COOL:
-        return MODE.COOL;
-      case ThermostatMode.HEAT:
-        return MODE.HEAT;
-      case ThermostatMode.DRY:
-        return MODE.DRY;
-      case ThermostatMode.FAN_ONLY:
-        return MODE.FAN;
-      case ThermostatMode.AUTO:
-        return MODE.AUTO;
-      default:
-        throw new Error(
-          `Unsupported thermostat mode "${gactionThermostatMode}"`,
-        );
-    }
-  }
-
   public async execute(
     homeDevice: Device,
-    commandParams: Record<string, string>,
+    commandParams: CommandParams,
   ): Promise<ExecuteIntentResponseCommand> {
     try {
       const daikinClient = new DaikinClient(homeDevice.address);
@@ -61,19 +43,21 @@ export class ThermostatSetModeCommand implements GActionCommandInterface {
       const setControlInfoParams = new URLSearchParams([
         ...controlInfo.getData().entries(),
       ]);
+
+      setControlInfoParams.set(
+        'pow',
+        commandParams.thermostatMode === ThermostatMode.OFF
+          ? POWER.OFF
+          : POWER.ON,
+      );
       if (
-        commandParams.thermostatMode === ThermostatMode.OFF ||
-        commandParams.thermostatMode === ThermostatMode.ON
+        ![ThermostatMode.OFF, ThermostatMode.ON].includes(
+          commandParams.thermostatMode,
+        )
       ) {
         setControlInfoParams.set(
-          'pow',
-          this.getThermostatMode(commandParams.thermostatMode),
-        );
-      } else {
-        setControlInfoParams.set('pow', POWER.ON);
-        setControlInfoParams.set(
           'mode',
-          this.getThermostatMode(commandParams.thermostatMode),
+          getDeviceThermostatMode(commandParams.thermostatMode),
         );
       }
 
@@ -83,6 +67,7 @@ export class ThermostatSetModeCommand implements GActionCommandInterface {
       }
 
       const latestControlInfo = await daikinClient.getControlInfo();
+      const sensorInfo = await daikinClient.getSensorInfo();
       return {
         ids: [homeDevice.id],
         status: DeviceStatus.SUCCESS,
@@ -90,6 +75,10 @@ export class ThermostatSetModeCommand implements GActionCommandInterface {
           online: true,
           on: latestControlInfo.get('pow') === POWER.ON,
           thermostatMode: commandParams.thermostatMode,
+          activeThermostatMode: commandParams.thermostatMode,
+          thermostatTemperatureSetpoint: parseFloat(controlInfo.get('stemp')),
+          thermostatTemperatureAmbient: parseFloat(sensorInfo.get('htemp')),
+          thermostatHumidityAmbient: parseFloat(sensorInfo.get('hhum')),
         },
       };
     } catch (error) {
