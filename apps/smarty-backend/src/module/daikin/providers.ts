@@ -1,4 +1,5 @@
 import { FactoryProvider } from '@nestjs/common';
+
 import { GActionCommandInterface } from '../gaction';
 import { OnOffCommand, ThermostatSetModeCommand } from './gaction';
 

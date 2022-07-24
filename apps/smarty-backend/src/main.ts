@@ -14,6 +14,7 @@ async function bootstrap() {
     .setTitle('Smarty')
     .setDescription('The Smarty API description')
     .setVersion('0.1.0')
+    .addOAuth2()
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
