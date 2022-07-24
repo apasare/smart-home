@@ -1,12 +1,26 @@
-import { Controller, Get, Query, Res, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Res,
+  Post,
+  Body,
+  Inject,
+} from '@nestjs/common';
 import { Response } from 'express';
+import * as OAuth2Server from 'oauth2-server';
 
 import { LoggerService } from '../../logger';
 import { AuthorizationRequestDTO } from '../dto';
+import { OAUTH2_SERVER_TOKEN } from '../providers';
 
 @Controller('oauth')
 export class OAuthController {
-  constructor(private readonly logger: LoggerService) {
+  constructor(
+    private readonly logger: LoggerService,
+    @Inject(OAUTH2_SERVER_TOKEN)
+    private readonly oauth2Server: OAuth2Server,
+  ) {
     this.logger.setContext(OAuthController.name);
   }
 
@@ -16,6 +30,7 @@ export class OAuthController {
     @Res() response: Response,
   ): void {
     this.logger.debug(query);
+    // this.oauth2Server.authenticate()
     return response.redirect(
       `${query.redirect_uri}?code=fakecode&state=${query.state}`,
     );

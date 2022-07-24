@@ -19,7 +19,7 @@ enum DatabaseTypeEnum {
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
   constructor(
     @Inject(databaseConfig.KEY)
-    private readonly dbConfig: ConfigType<typeof databaseConfig>,
+    protected readonly dbConfig: ConfigType<typeof databaseConfig>,
   ) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
